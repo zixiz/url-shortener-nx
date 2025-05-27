@@ -4,18 +4,40 @@
   "license": "MIT",
   "scripts": {},
   "private": true,
-  "dependencies": {},
   "devDependencies": {
-    "@nx/js": "21.1.2",
+    "@nx/devkit": "21.1.2",
+    "@nx/esbuild": "21.1.2",
+    "@nx/js": "^21.1.2",
+    "@nx/next": "^21.1.2",
+    "@nx/node": "^21.1.2",
+    "@nx/playwright": "21.1.2",
+    "@playwright/test": "^1.36.0",
     "@swc-node/register": "~1.9.1",
+    "@swc/cli": "~0.6.0",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
+    "@types/express": "^4.17.21",
+    "@types/node": "~18.16.9",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "autoprefixer": "10.4.13",
+    "esbuild": "^0.19.2",
     "nx": "21.1.2",
+    "postcss": "8.4.38",
     "prettier": "^2.6.2",
+    "tailwindcss": "3.4.3",
     "tslib": "^2.3.0",
     "typescript": "~5.7.2"
   },
   "workspaces": [
-    "packages/*"
-  ]
+    "packages/*",
+    "apps/*",
+    "libs/*"
+  ],
+  "dependencies": {
+    "express": "^4.21.2",
+    "next": "~15.2.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
 }

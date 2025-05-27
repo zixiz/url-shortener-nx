@@ -2,5 +2,27 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./apps/auth-service"
+    },
+    {
+      "path": "./apps/url-service"
+    },
+    {
+      "path": "./apps/redirect-service"
+    },
+    {
+      "path": "./apps/worker-service"
+    },
+    {
+      "path": "./apps/web-app-e2e"
+    },
+    {
+      "path": "./apps/web-app"
+    },
+    {
+      "path": "./libs/shared"
+    }
+  ]
 }

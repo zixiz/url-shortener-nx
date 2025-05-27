@@ -1,0 +1,70 @@
+{
+  "name": "@url-shortener-nx/worker-service",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "targets": {
+      "build": {
+        "executor": "@nx/esbuild:esbuild",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "defaultConfiguration": "production",
+        "options": {
+          "platform": "node",
+          "outputPath": "apps/worker-service/dist",
+          "format": [
+            "cjs"
+          ],
+          "bundle": false,
+          "main": "apps/worker-service/src/main.ts",
+          "tsConfig": "apps/worker-service/tsconfig.app.json",
+          "assets": [
+            "apps/worker-service/src/assets"
+          ],
+          "esbuildOptions": {
+            "sourcemap": true,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        },
+        "configurations": {
+          "development": {},
+          "production": {
+            "esbuildOptions": {
+              "sourcemap": false,
+              "outExtension": {
+                ".js": ".js"
+              }
+            }
+          }
+        }
+      },
+      "serve": {
+        "continuous": true,
+        "executor": "@nx/js:node",
+        "defaultConfiguration": "development",
+        "dependsOn": [
+          "build"
+        ],
+        "options": {
+          "buildTarget": "@url-shortener-nx/worker-service:build",
+          "runBuildTargetDependencies": false
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "@url-shortener-nx/worker-service:build:development"
+          },
+          "production": {
+            "buildTarget": "@url-shortener-nx/worker-service:build:production"
+          }
+        }
+      }
+    },
+    "tags": [
+      "service",
+      "backend"
+    ]
+  }
+}
