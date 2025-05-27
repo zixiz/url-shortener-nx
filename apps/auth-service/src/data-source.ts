@@ -1,9 +1,7 @@
-// apps/auth-service/src/data-source.ts
 import 'reflect-metadata';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { User } from './entities/user.entity.js'; 
-// import { SnakeNamingStrategy } from 'typeorm-naming-strategies'; // Optional: for snake_case columns
 
 dotenv.config(); 
 
