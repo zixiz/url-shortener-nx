@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  postgres_auth:
+    image: postgres:15
+    container_name: postgres_auth_dev
+    environment:
+      POSTGRES_USER: root     
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: url_shortener_auth
+    ports:
+      - "5432:5432" # Maps host port 5432 to container port 5432
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # We will add other databases (e.g., for URL service) here later
+  # postgres_url:
+  #   image: postgres:15
+  #   container_name: postgres_url_dev
+  #   environment:
+  #     POSTGRES_USER: youruser
+  #     POSTGRES_PASSWORD: yourpassword
+  #     POSTGRES_DB: url_shortener_url
+  #   ports:
+  #     - "5433:5432" # Use a different host port if running multiple PG instances locally
+  #   volumes:
+  #     - postgres_url_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+volumes:
+  postgres_auth_data: # Defines a named volume for persistent auth DB data
+
+# Network (optional, but good for service discovery if not using localhost)
+# networks:
+#  app_network:
+#    driver: bridge
