@@ -5,7 +5,7 @@ dotenv.config();
 import express from 'express';
 import { AppDataSource } from './data-source.js'; 
 import { logger } from './config/logger.js';
-// import authRoutes from './routes/auth.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 async function bootstrap() {
   const app = express();
@@ -21,7 +21,7 @@ async function bootstrap() {
     process.exit(1);
   }
 
-  // app.use('/api/auth', authRoutes);
+  app.use('/api/auth', authRoutes);
 
   const port = process.env.PORT || 3001;
   const server = app.listen(port, () => {

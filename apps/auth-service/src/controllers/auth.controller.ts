@@ -20,8 +20,9 @@ export class AuthController {
         return;
       }
 
+      
       const { email, password, username } = value;
-
+      
       const existingUser = await this.userRepository.findOneBy({ email });
       if (existingUser) {
         logger.warn('Registration attempt with existing email', { email });
