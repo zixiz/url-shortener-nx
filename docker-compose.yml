@@ -5,33 +5,53 @@ services:
     image: postgres:15
     container_name: postgres_auth_dev
     environment:
-      POSTGRES_USER: root     
-      POSTGRES_PASSWORD: root
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root  
       POSTGRES_DB: url_shortener_auth
     ports:
-      - "5432:5432" # Maps host port 5432 to container port 5432
+      - "5432:5432"
     volumes:
       - postgres_auth_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  # We will add other databases (e.g., for URL service) here later
-  # postgres_url:
-  #   image: postgres:15
-  #   container_name: postgres_url_dev
-  #   environment:
-  #     POSTGRES_USER: youruser
-  #     POSTGRES_PASSWORD: yourpassword
-  #     POSTGRES_DB: url_shortener_url
-  #   ports:
-  #     - "5433:5432" # Use a different host port if running multiple PG instances locally
-  #   volumes:
-  #     - postgres_url_data:/var/lib/postgresql/data
-  #   restart: unless-stopped
+  postgres_url: 
+    image: postgres:15
+    container_name: postgres_url_dev
+    environment:
+      POSTGRES_USER: root        
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: url_shortener_url 
+    ports:
+      - "5434:5432" 
+    volumes:
+      - postgres_url_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  rabbitmq: 
+    image: rabbitmq:3.12-management 
+    container_name: rabbitmq_dev
+    ports:
+      - "5672:5672"   
+      - "15672:15672" # Management UI port
+    environment:
+      # Default user/pass is guest/guest, suitable for local dev
+      # RABBITMQ_DEFAULT_USER: user
+      # RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_VHOST: "/"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+    healthcheck: # Optional: simple healthcheck
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
-  postgres_auth_data: # Defines a named volume for persistent auth DB data
+  postgres_auth_data:
+  postgres_url_data: 
+  rabbitmq_data:     
 
-# Network (optional, but good for service discovery if not using localhost)
-# networks:
-#  app_network:
-#    driver: bridge
+# networks: # Optional, if you need to define a custom network
+#   app_network:
+#     driver: bridge
