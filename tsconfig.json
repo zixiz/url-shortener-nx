@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/shared"
+    },
+    {
+      "path": "./apps/management-service"
     }
   ]
 }

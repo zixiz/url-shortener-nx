@@ -1,5 +1,5 @@
 {
-  "name": "@url-shortener-nx/redirect-service",
+  "name": "@url-shortener-nx/management-service",
   "version": "0.0.1",
   "private": true,
   "nx": {
@@ -12,15 +12,15 @@
         "defaultConfiguration": "production",
         "options": {
           "platform": "node",
-          "outputPath": "apps/redirect-service/dist",
+          "outputPath": "apps/management-service/dist",
           "format": [
             "cjs"
           ],
           "bundle": false,
-          "main": "apps/redirect-service/src/main.ts",
-          "tsConfig": "apps/redirect-service/tsconfig.app.json",
+          "main": "apps/management-service/src/main.ts",
+          "tsConfig": "apps/management-service/tsconfig.app.json",
           "assets": [
-            "apps/redirect-service/src/assets"
+            "apps/management-service/src/assets"
           ],
           "esbuildOptions": {
             "sourcemap": true,
@@ -49,15 +49,15 @@
           "build"
         ],
         "options": {
-          "buildTarget": "@url-shortener-nx/redirect-service:build",
+          "buildTarget": "@url-shortener-nx/management-service:build",
           "runBuildTargetDependencies": false
         },
         "configurations": {
           "development": {
-            "buildTarget": "@url-shortener-nx/redirect-service:build:development"
+            "buildTarget": "@url-shortener-nx/management-service:build:development"
           },
           "production": {
-            "buildTarget": "@url-shortener-nx/redirect-service:build:production"
+            "buildTarget": "@url-shortener-nx/management-service:build:production"
           }
         }
       }
@@ -65,7 +65,7 @@
     "tags": [
       "service",
       "backend",
-      "redirect"
+      "monolith"
     ]
   }
 }

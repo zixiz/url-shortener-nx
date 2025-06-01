@@ -19,12 +19,13 @@
     "customConditions": ["development"],
     "baseUrl": ".",
     "paths": {
-      "@url-shortener-nx/auth-service": ["apps/auth-service/src/main.ts"], 
-      "@url-shortener-nx/url-service": ["apps/url-service/src/main.ts"],
-      "@url-shortener-nx/redirect-service": ["apps/redirect-service/src/main.ts"],
-      "@url-shortener-nx/worker-service": ["apps/worker-service/src/main.ts"],
+      "@url-shortener-nx/management-service": ["apps/auth-service/src/main.ts"],
+      "@url-shortener-nx/redirect-service": [
+        "apps/redirect-service/src/main.ts"
+      ],
       "@url-shortener-nx/shared": ["libs/shared/src/index.ts"],
-
+      "@url-shortener-nx/url-service": ["apps/url-service/src/main.ts"],
+      "@url-shortener-nx/worker-service": ["apps/worker-service/src/main.ts"]
     }
   }
 }
