@@ -1,31 +1,29 @@
+// url-shortener-nx/tsconfig.base.json
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "composite": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false, // Default for applications
+    "moduleResolution": "node", // Or NodeNext if that's your workspace default
+    "emitDecoratorMetadata": true,   // <--- Good to have as a base
+    "experimentalDecorators": true, // <--- Good to have as a base
     "importHelpers": true,
-    "isolatedModules": true,
-    "lib": ["es2022"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "noEmitOnError": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    "target": "es2020", // Or newer like es2022
+    "module": "esnext",  // Or commonjs if that's your workspace default
+    "lib": ["es2020", "dom"], // "dom" might be needed for Next.js
     "skipLibCheck": true,
-    "strict": true,
-    "target": "es2022",
-    "customConditions": ["development"],
+    "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@url-shortener-nx/management-service": ["apps/auth-service/src/main.ts"],
-      "@url-shortener-nx/redirect-service": [
-        "apps/redirect-service/src/main.ts"
-      ],
-      "@url-shortener-nx/shared": ["libs/shared/src/index.ts"],
-      "@url-shortener-nx/url-service": ["apps/url-service/src/main.ts"],
-      "@url-shortener-nx/worker-service": ["apps/worker-service/src/main.ts"]
-    }
-  }
+      // Your Nx path aliases will be here
+      "@url-shortener-nx/management-service": ["apps/management-service/src/main.ts"],
+      "@url-shortener-nx/redirect-service": ["apps/redirect-service/src/main.ts"],
+      "@url-shortener-nx/web-app": ["apps/web-app/src/main.tsx"], // Or appropriate entry for Next.js
+      "@url-shortener-nx/shared": ["libs/shared/src/index.ts"]
+    },
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "tmp", "dist"]
 }

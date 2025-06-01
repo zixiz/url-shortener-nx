@@ -6,7 +6,7 @@ import express from 'express';
 import { AppDataSource } from './data-source.js'; // Will create this
 import { logger } from './config/logger.js';     // Will create this
 import { connectRabbitMQ } from './config/rabbitmq.js'; // Will create this
-//import { connectRedis } from './config/redis.js'; // Will create this
+import { connectRedis } from './config/redis.js'; // Will create this
 
 // Auth and URL routes will be imported here later
 

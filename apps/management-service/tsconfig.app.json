@@ -1,11 +1,24 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": "../../dist/out-tsc/apps/management-service", 
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": ["node"],
-    "rootDir": "src",
-    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
+    "emitDecoratorMetadata": true,  
+    "experimentalDecorators": true, 
+    "target": "es2022",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "declaration": false 
   },
-  "include": ["src/**/*.ts"],
-  "exclude": []
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "include": ["src/**/*.ts"]
 }
