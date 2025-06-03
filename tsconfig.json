@@ -4,16 +4,7 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/auth-service"
-    },
-    {
-      "path": "./apps/url-service"
-    },
-    {
       "path": "./apps/redirect-service"
-    },
-    {
-      "path": "./apps/worker-service"
     },
     {
       "path": "./apps/web-app-e2e"
