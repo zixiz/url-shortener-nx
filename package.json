@@ -2,7 +2,14 @@
   "name": "@url-shortener-nx/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev:management": "nx serve management-service",
+    "dev:redirect": "nx serve redirect-service",
+    "dev:web": "nx serve web-app",
+    "build:management": "nx build management-service",
+    "build:redirect": "nx build redirect-service",
+    "build:web": "nx build web-app"
+  },
   "private": true,
   "devDependencies": {
     "@nx/devkit": "21.1.2",
