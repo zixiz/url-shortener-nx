@@ -13,7 +13,7 @@ router.post('/', optionalAuthenticateJWT, urlController.createShortUrl); // Plac
 router.get('/mine', authenticateJWT, urlController.listMyUrls);
 
 // GET /api/stats/:shortId - Publicly view click count
-router.get('/stats/:shortId', urlController.getUrlStats);
+// router.get('/stats/:shortId', urlController.getUrlStats);
 
 
 export default router;

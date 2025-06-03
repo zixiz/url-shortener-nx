@@ -41,7 +41,7 @@ async function bootstrap() {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/urls', urlRoutes);
-  app.use('/api/stats', statsRoutes);
+  app.use('/api', statsRoutes);
 
   const port = process.env.PORT || 3001;
   app.listen(port, () => {

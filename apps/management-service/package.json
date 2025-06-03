@@ -1,6 +1,7 @@
 {
   "name": "@url-shortener-nx/management-service",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "nx": {
     "targets": {
@@ -12,11 +13,11 @@
         "defaultConfiguration": "production",
         "options": {
           "platform": "node",
-          "outputPath": "apps/management-service/dist",
+          "outputPath": "dist/apps/management-service",
           "format": [
-            "cjs"
+            "esm"
           ],
-          "bundle": false,
+          "bundle": true,
           "main": "apps/management-service/src/main.ts",
           "tsConfig": "apps/management-service/tsconfig.app.json",
           "assets": [
@@ -30,10 +31,11 @@
           }
         },
         "configurations": {
-          "development": {},
+          "development": {
+          },
           "production": {
             "esbuildOptions": {
-              "sourcemap": false,
+              "sourcemap": false, 
               "outExtension": {
                 ".js": ".js"
               }
@@ -50,7 +52,7 @@
         ],
         "options": {
           "buildTarget": "@url-shortener-nx/management-service:build",
-          "runBuildTargetDependencies": false
+          "runBuildTargetDependencies": false 
         },
         "configurations": {
           "development": {
