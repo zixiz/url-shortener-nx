@@ -2,9 +2,10 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
-import { logger } from './config/logger.js';     // Will create this
-import { connectRedis } from './config/redis.js'; // Will create this
-import { startRabbitMQConsumer } from './rabbitmq-consumer.js'; // Will create this
+import { logger } from './config/logger.js';
+import { connectRedis } from './config/redis.js';
+import { startRabbitMQConsumer } from './rabbitmq-consumer.js';
+import redirectRoutes from './routes/redirect.routes.js';
 
 // Redirect route will be imported here
 
@@ -28,7 +29,7 @@ async function bootstrap() {
     // Decide if this is critical enough to exit
   }
 
-  // app.get('/:shortId', redirectHandler);
+  app.use('/', redirectRoutes);
 
   const port = process.env.PORT || 3003;
   app.listen(port, () => {
