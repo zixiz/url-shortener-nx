@@ -1,44 +1,42 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AuthGuard from '@/components/AuthGuard';
+import AuthGuard from '../../components/AuthGuard';
 import {
   Typography, Container, Box, CircularProgress, Alert,
-  List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider
-} from '@mui/material';
+  List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider, Link as MuiLink
+} from '@mui/material'; // Added MuiLink, Divider
 import { useAuth } from '@/context/AuthContext';
-import apiClient from '@/lib/apiClient'; // Assuming path alias for apiClient
+import apiClient from '@/lib/apiClient';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import Link from 'next/link'; 
 
 interface ShortenedUrl {
   id: string;
   shortId: string;
   longUrl: string;
-  fullShortUrl: string; // This comes from the API response
+  fullShortUrl: string;
   clickCount: number;
-  createdAt: string; 
-  userId?: string | null; // userId is part of the API response
+  createdAt: string;
+  userId?: string | null;
 }
 
 export default function MyUrlsPage() {
-  const { user, isLoading: isAuthLoading, token } = useAuth(); // Added token
+  const { user, isLoading: isAuthLoading, token } = useAuth();
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoadingUrls, setIsLoadingUrls] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUrls = async () => {
-      if (!user || !token) { // Ensure user and token are present before fetching
-        // AuthGuard should handle redirection if not authenticated,
-        // but this is a defensive check or handles edge cases.
+      if (!user || !token) {
         setIsLoadingUrls(false);
         return;
       }
       setIsLoadingUrls(true);
       setError(null);
       try {
-        // apiClient already includes the Authorization header if token exists
         const response = await apiClient.get<ShortenedUrl[]>('/urls/mine');
         setUrls(response.data);
       } catch (err: any) {
@@ -50,53 +48,40 @@ export default function MyUrlsPage() {
       }
     };
 
-    // Fetch URLs only when user is authenticated and auth is no longer loading
     if (!isAuthLoading && user && token) {
       fetchUrls();
     } else if (!isAuthLoading && !user) {
-      // If auth is resolved and there's no user, no need to attempt fetch
       setIsLoadingUrls(false);
     }
-    // Dependency array: re-fetch if user or token changes (e.g., after login)
-    // or if isAuthLoading changes from true to false (initial auth check complete)
   }, [user, token, isAuthLoading]);
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => {
-        // Optional: Show a success notification (e.g., MUI Snackbar)
-        alert('Short URL copied to clipboard!'); // Simple alert for now
-      })
+      .then(() => alert('Short URL copied to clipboard!'))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
         alert('Failed to copy URL.');
       });
   };
 
-  // This outer loading check is for the authentication status
   if (isAuthLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 128px)' }}>
-        <CircularProgress />
-      </Box>
-    );
+    return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 128px)' }}><CircularProgress /></Box> );
+  }
+  if (!user) { // AuthGuard should handle this, but as a fallback
+    return ( <Container maxWidth="md"><Box sx={{ my: 4, textAlign: 'center' }}><Typography variant="h6">Please log in to view your URLs.</Typography></Box></Container> );
   }
 
-  // AuthGuard will handle redirection if not authenticated.
-  // If execution reaches here, user should be authenticated.
   return (
     <AuthGuard> 
-      <Container maxWidth="lg"> {/* Changed to lg for more space for table/list */}
+      <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             My Shortened URLs
           </Typography>
-          <Typography sx={{mt: 1, mb: 3}}>Welcome, {user?.username || user?.email}!</Typography>
+          <Typography sx={{mt: 1, mb: 3}}>Welcome, {user.username || user.email}!</Typography>
           
-          {isLoadingUrls && ( // Loading state specifically for the URLs API call
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-              <CircularProgress />
-            </Box>
+          {isLoadingUrls && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}><CircularProgress /></Box>
           )}
 
           {!isLoadingUrls && error && (
@@ -105,54 +90,68 @@ export default function MyUrlsPage() {
 
           {!isLoadingUrls && !error && urls.length === 0 && (
             <Typography sx={{ mt: 3, textAlign: 'center' }}>
-              You haven't created any short URLs yet. Go ahead and create some!
+              You haven't created any short URLs yet. Go ahead and <MuiLink component={Link} href="/">create some</MuiLink>!
             </Typography>
           )}
 
           {!isLoadingUrls && !error && urls.length > 0 && (
-            <Paper elevation={2} sx={{ mt: 2 }}>
-              <List>
+            <Paper elevation={2} sx={{ mt: 2 }}> {/* Added Paper for better visual grouping */}
+              <List dense> {/* `dense` makes the list items a bit more compact */}
                 {urls.map((url, index) => (
                   <React.Fragment key={url.id}>
-                    <ListItem>
+                    <ListItem
+                      sx={{ 
+                        py: 1.5, // Add some padding
+                        // Optional: hover effect
+                        // '&:hover': {
+                        //   backgroundColor: (theme) => theme.palette.action.hover,
+                        // },
+                      }}
+                    >
                       <ListItemText
                         primary={
-                          <Typography variant="body1" sx={{ fontWeight: 'medium', color: 'primary.main' }}>
+                          <MuiLink 
+                            href={url.fullShortUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }} // Use theme color
+                          >
                             {url.fullShortUrl}
-                          </Typography>
+                          </MuiLink>
                         }
                         secondary={
                           <>
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', wordBreak: 'break-all' }}>
-                              Original: {url.longUrl}
+                            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', wordBreak: 'break-all', mt: 0.5 }}>
+                              Original: {url.longUrl.length > 80 ? `${url.longUrl.substring(0, 80)}...` : url.longUrl}
                             </Typography>
-                            <Typography component="span" variant="caption" color="text.disabled">
-                              Created: {new Date(url.createdAt).toLocaleString()} | Clicks: {url.clickCount}
+                            <Typography component="span" variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                              Created: {new Date(url.createdAt).toLocaleDateString()} | Clicks: {url.clickCount}
                             </Typography>
                           </>
                         }
                       />
-                      <ListItemSecondaryAction>
+                      <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}> {/* Adjust spacing */}
                         <Tooltip title="Copy Short URL">
-                          <IconButton edge="end" aria-label="copy" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
-                            <ContentCopyIcon />
+                          <IconButton edge="end" size="small" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
+                            <ContentCopyIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Open Original URL">
+                        <Tooltip title="Open Original URL in new tab">
                           <IconButton 
                             edge="end" 
-                            aria-label="open original" 
-                            href={url.longUrl} // Direct link to original URL
-                            target="_blank"     // Open in new tab
-                            rel="noopener noreferrer" // Security best practice
-                            sx={{ ml: 1 }}
+                            size="small" 
+                            component="a" 
+                            href={url.longUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{ ml: 0.5 }}
                           >
-                            <OpenInNewIcon />
+                            <OpenInNewIcon fontSize="small"/>
                           </IconButton>
                         </Tooltip>
                       </ListItemSecondaryAction>
                     </ListItem>
-                    {index < urls.length - 1 && <Divider component="li" />}
+                    {index < urls.length - 1 && <Divider component="li" variant="inset" />} {/* variant="inset" or fullWidth */}
                   </React.Fragment>
                 ))}
               </List>

@@ -1,14 +1,16 @@
+// apps/web-app/src/app/page.tsx
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
-  CircularProgress, Alert, List, ListItem, ListItemText, IconButton, Link as MuiLink, Tooltip
+  CircularProgress, Alert, List, ListItem, ListItemText, IconButton, Link as MuiLink, Tooltip,
+  Divider,ListItemSecondaryAction
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useAuth } from '@/context/AuthContext';
-import apiClient from '@/lib/apiClient';
+import { useAuth } from '@/context/AuthContext'; // Using path alias
+import apiClient from '@/lib/apiClient'; // Using path alias
 
 interface CreatedUrlResponse {
   id: string;
@@ -22,7 +24,7 @@ interface AnonymousLink {
   shortId: string;
   longUrl: string;
   fullShortUrl: string;
-  createdAt: number; // Timestamp for sorting or auto-removal
+  createdAt: number; 
 }
 
 const MAX_ANONYMOUS_LINKS = 5;
@@ -37,9 +39,8 @@ export default function HomePage() {
 
   const { user: authenticatedUser, isLoading: isAuthLoading } = useAuth(); 
 
-  // Load anonymous links from localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') { // Ensure localStorage is available
+    if (typeof window !== 'undefined') {
       try {
         const storedLinks = localStorage.getItem(ANONYMOUS_LINKS_STORAGE_KEY);
         if (storedLinks) {
@@ -47,7 +48,7 @@ export default function HomePage() {
         }
       } catch (e) {
         console.error("Failed to parse anonymous links from localStorage", e);
-        localStorage.removeItem(ANONYMOUS_LINKS_STORAGE_KEY); // Clear corrupted data
+        localStorage.removeItem(ANONYMOUS_LINKS_STORAGE_KEY);
       }
     }
   }, []);
@@ -62,7 +63,6 @@ export default function HomePage() {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
       setCreatedUrl(response.data);
 
-      // If user is anonymous and URL was created successfully, add to localStorage
       if (!authenticatedUser && response.data) {
         const newLink: AnonymousLink = {
           shortId: response.data.shortId,
@@ -79,7 +79,7 @@ export default function HomePage() {
           return updatedLinks;
         });
       }
-      setLongUrl(''); // Clear input field on success
+      setLongUrl(''); 
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
@@ -179,11 +179,26 @@ export default function HomePage() {
           </Typography>
           <Paper elevation={1}>
             <List dense>
-              {anonymousLinks.map((link) => (
-                <ListItem 
-                  key={link.shortId}
-                  secondaryAction={
-                    <>
+              {anonymousLinks.map((link, index) => (
+                <React.Fragment key={link.shortId}>
+                  <ListItem 
+                    sx={{ 
+                      py: 1.5, 
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <MuiLink href={link.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }}>
+                          {link.fullShortUrl}
+                        </MuiLink>
+                      }
+                      secondary={
+                        <Typography component="span" variant="caption" sx={{ display: 'block', wordBreak: 'break-all', mt: 0.5 }}>
+                          Original: {link.longUrl.length > 60 ? `${link.longUrl.substring(0, 60)}...` : link.longUrl}
+                        </Typography>
+                      }
+                    />
+                    <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
                       <Tooltip title="Copy Short URL">
                         <IconButton edge="end" size="small" onClick={() => handleCopyToClipboard(link.fullShortUrl)}>
                           <ContentCopyIcon fontSize="small" />
@@ -202,22 +217,10 @@ export default function HomePage() {
                           <OpenInNewIcon fontSize="small"/>
                         </IconButton>
                       </Tooltip>
-                    </>
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <MuiLink href={link.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'medium', wordBreak: 'break-all' }}>
-                        {link.fullShortUrl}
-                      </MuiLink>
-                    }
-                    secondary={
-                      <Typography component="span" variant="caption" sx={{ display: 'block', wordBreak: 'break-all' }}>
-                        Original: {link.longUrl.length > 60 ? `${link.longUrl.substring(0, 60)}...` : link.longUrl}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  {index < anonymousLinks.length - 1 && <Divider component="li" variant="inset" />} 
+                </React.Fragment>
               ))}
             </List>
           </Paper>
