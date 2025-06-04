@@ -3,15 +3,18 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Container, Box, Button, CircularProgress } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ThemeToggleButton from '../ThemeToggleButton';
 import { useAuth } from '@/context/AuthContext'; 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout, isLoading: isAuthLoading } = useAuth(); // Get user, logout, and isLoading from AuthContext
+  const { user, logout, isLoading: isAuthLoading } = useAuth();
   const isAuthenticated = !!user;
+ const router = useRouter();
 
   const handleLogout = () => {
     logout();
+    router.push('/');
   };
 
   if (isAuthLoading) {
