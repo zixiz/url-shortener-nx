@@ -1,8 +1,8 @@
 'use client';
-
 import React, { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { ThemeProvider, CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
 import { createAppTheme } from '../../theme/theme'; // Corrected path from previous step
+import { AuthProvider } from '../../context/AuthContext';
 
 interface ThemeContextType {
   mode: PaletteMode;
@@ -80,10 +80,12 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
 
   return (
     <ThemeModeContext.Provider value={themeModeAPI}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </AuthProvider>
     </ThemeModeContext.Provider>
   );
 }
