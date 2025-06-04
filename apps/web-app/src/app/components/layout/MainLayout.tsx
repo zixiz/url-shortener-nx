@@ -1,16 +1,26 @@
-'use client';
-import React from 'react';
-import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/material';
-import Link from 'next/link'; 
-import ThemeToggleButton from '../ThemeToggleButton'; 
+'use client'; 
 
-// Placeholder for AuthContext, will be used later
-// import { useAuth } from '../../context/AuthContext'; 
+import React from 'react';
+import { AppBar, Toolbar, Typography, Container, Box, Button, CircularProgress } from '@mui/material';
+import Link from 'next/link';
+import ThemeToggleButton from '../ThemeToggleButton';
+import { useAuth } from '@/context/AuthContext'; 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  // Placeholder: const { user, logout } = useAuth ? useAuth() : { user: null, logout: () => {} };
-  const user = null; // Placeholder until AuthContext is implemented
+  const { user, logout, isLoading: isAuthLoading } = useAuth(); // Get user, logout, and isLoading from AuthContext
   const isAuthenticated = !!user;
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  if (isAuthLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -22,12 +32,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </Link>
           </Typography>
           
-          {/* Navigation Links - will be more dynamic later */}
           <Button color="inherit" component={Link} href="/">Home</Button>
-          {!isAuthenticated && <Button color="inherit" component={Link} href="/login">Login</Button>}
-          {!isAuthenticated && <Button color="inherit" component={Link} href="/register">Register</Button>}
-          {isAuthenticated && <Button color="inherit" component={Link} href="/my-urls">My URLs</Button>}
-          {isAuthenticated && <Button color="inherit" /* onClick={logout} */ >Logout</Button>} {/* Placeholder for logout */}
+          
+          {!isAuthenticated && (
+            <>
+              <Button color="inherit" component={Link} href="/login">Login</Button>
+              <Button color="inherit" component={Link} href="/register">Register</Button>
+            </>
+          )}
+
+          {isAuthenticated && (
+            <>
+              <Button color="inherit" component={Link} href="/my-urls">My URLs</Button>
+              <Button color="inherit" onClick={handleLogout}>Logout</Button> 
+            </>
+          )}
+          
           <Button color="inherit" component={Link} href="/stats">Stats</Button>
 
           <ThemeToggleButton />

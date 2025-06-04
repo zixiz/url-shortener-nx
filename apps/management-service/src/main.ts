@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import cors from 'cors';
 import { AppDataSource } from './data-source.js'; 
 import { logger } from './config/logger.js';    
 import { connectRabbitMQ } from './config/rabbitmq.js'; 
@@ -15,6 +16,16 @@ import statsRoutes from './routes/stats.routes.js';
 
 async function bootstrap() {
   const app = express();
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+  logger.info(`CORS enabled for origin: [${frontendUrl}]`); 
+  app.use(cors({
+    origin: frontendUrl, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true, 
+  }));
+
   app.use(express.json());
 
   try {

@@ -1,8 +1,7 @@
-// apps/web-app/src/app/page.tsx
 "use client"; 
 
 import { Button, Typography, Container } from '@mui/material';
-import { useAuth } from '@/context/AuthContext'; // Assuming path alias
+import { useAuth } from '@/context/AuthContext'; 
 
 export default function HomePage() {
   const { isLoading, user, error, token } = useAuth(); // Consume the context
