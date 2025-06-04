@@ -1,0 +1,60 @@
+'use client';
+import React from 'react';
+import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/material';
+import Link from 'next/link'; 
+import ThemeToggleButton from '../ThemeToggleButton'; 
+
+// Placeholder for AuthContext, will be used later
+// import { useAuth } from '../../context/AuthContext'; 
+
+export default function MainLayout({ children }: { children: React.ReactNode }) {
+  // Placeholder: const { user, logout } = useAuth ? useAuth() : { user: null, logout: () => {} };
+  const user = null; // Placeholder until AuthContext is implemented
+  const isAuthenticated = !!user;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Link href="/" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
+              URL Shorty
+            </Link>
+          </Typography>
+          
+          {/* Navigation Links - will be more dynamic later */}
+          <Button color="inherit" component={Link} href="/">Home</Button>
+          {!isAuthenticated && <Button color="inherit" component={Link} href="/login">Login</Button>}
+          {!isAuthenticated && <Button color="inherit" component={Link} href="/register">Register</Button>}
+          {isAuthenticated && <Button color="inherit" component={Link} href="/my-urls">My URLs</Button>}
+          {isAuthenticated && <Button color="inherit" /* onClick={logout} */ >Logout</Button>} {/* Placeholder for logout */}
+          <Button color="inherit" component={Link} href="/stats">Stats</Button>
+
+          <ThemeToggleButton />
+        </Toolbar>
+      </AppBar>
+
+      <Container component="main" sx={{ py: 3, flexGrow: 1 }}>
+        {children}
+      </Container>
+
+      <Box
+        component="footer"
+        sx={{
+          py: 2,
+          px: 2,
+          mt: 'auto',
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'light'
+              ? theme.palette.grey[200]
+              : theme.palette.grey[800],
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          © {new Date().getFullYear()} URL Shortener App
+        </Typography>
+      </Box>
+    </Box>
+  );
+}

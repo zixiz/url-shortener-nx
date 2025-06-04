@@ -1,54 +1,54 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json", // Assuming this points to your workspace root tsconfig.base.json
   "compilerOptions": {
-    "jsx": "preserve",
-    "noEmit": true,
-    "emitDeclarationOnly": false,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
+    // Options that Next.js typically sets or requires:
+    "target": "es5", // Next.js often targets es5 for browser compatibility then uses modern syntax via SWC
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
     "allowJs": true,
-    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false, // Next.js often defaults this to false initially
     "forceConsistentCasingInFileNames": true,
+    "noEmit": true, // Important: Next.js handles emission; tsc here is for type checking
+    "esModuleInterop": true,
+    "module": "esnext", // For type checking modern module syntax
+    "moduleResolution": "bundler", // Or "node", "NodeNext". "bundler" is good for modern setups.
+    "resolveJsonModule": true,
+    "isolatedModules": true, // Next.js requirement
+    "jsx": "preserve", // Next.js requirement
     "incremental": true,
+    "baseUrl": ".", // The current directory (apps/web-app)
+    "paths": {
+      "@/*": [
+        "src/*"
+      ] // Assuming your code is in apps/web-app/src
+    }
+    // DO NOT explicitly set rootDir here if it conflicts with Next.js's generated types.
+    // Let TypeScript infer it from includes, or ensure includes are compatible.
+    ,
     "plugins": [
       {
         "name": "next"
       }
-    ],
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "outDir": "dist",
-    "rootDir": "src",
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
-    "strict": false,
-    "isolatedModules": true
+    ]
   },
   "include": [
-    "src/**/*.ts",
+    "next-env.d.ts",
+    "src/**/*.ts", // Include your actual source files
     "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
-    "../../apps/web-app/.next/types/**/*.ts",
-    "../../dist/apps/web-app/.next/types/**/*.ts",
-    "next-env.d.ts"
+    "../../dist/apps/web-app/.next/types/**/*.ts"
+    // "custom.d.ts" // If you have one
+    // DO NOT include paths into ".next" or "dist" here if they conflict with rootDir.
+    // Next.js's internal build will handle its generated types.
+    // If Next.js auto-adds something like ".next/types/**/*.ts" and it causes rootDir issues,
+    // that's a known tricky point.
   ],
   "exclude": [
-    "out-tsc",
-    "dist",
     "node_modules",
-    "jest.config.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    ".next"
+    ".next", // Exclude build output from this tsconfig
+    "dist" // Exclude Nx build output
   ]
 }
