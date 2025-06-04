@@ -1,25 +1,23 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import apiClient from '../lib/apiClient'; // Our configured axios instance
+import apiClient from '../lib/apiClient'; 
 
-// Define types for user and context
 interface User {
   id: string;
   email: string;
   username?: string | null;
-  // Add other relevant user fields you get from /me or login
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  isLoading: boolean;
+  isLoading: boolean; // This will represent initial auth load AND API call loading
   error: string | null;
   login: (emailP: string, passwordP: string) => Promise<boolean>;
   register: (emailP: string, passwordP: string, usernameP?: string) => Promise<boolean>;
   logout: () => void;
-  // verifyAuth: () => Promise<void>; // Optional: function to verify token on app load
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,10 +28,9 @@ const AUTH_USER_KEY = 'authUser';
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // True initially for localStorage check
   const [error, setError] = useState<string | null>(null);
 
-  // Effect to load persisted auth state on initial mount
   useEffect(() => {
     const persistedToken = localStorage.getItem(AUTH_TOKEN_KEY);
     const persistedUserJson = localStorage.getItem(AUTH_USER_KEY);
@@ -43,24 +40,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const persistedUser = JSON.parse(persistedUserJson) as User;
         setToken(persistedToken);
         setUser(persistedUser);
-        // Optional: verify token with a /me request here to ensure it's still valid
-        // For now, we'll trust the stored token until an API call fails with 401
       } catch (e) {
         console.error("Failed to parse persisted user data", e);
         localStorage.removeItem(AUTH_TOKEN_KEY);
         localStorage.removeItem(AUTH_USER_KEY);
       }
     }
-    setIsLoading(false);
+    setIsLoading(false); // Done with initial load attempt
   }, []);
+
+  const clearError = () => { // <--- DEFINE clearError
+    // console.log("AuthContext: Clearing error");
+    setError(null);
+  };
 
   const login = async (emailP: string, passwordP: string): Promise<boolean> => {
     setIsLoading(true);
-    setError(null);
+    setError(null); // Clear previous errors
     try {
       const response = await apiClient.post('/auth/login', { email: emailP, password: passwordP });
       const { token: apiToken, userId, email, username } = response.data;
-      
       const userData: User = { id: userId, email, username };
       
       setToken(apiToken);
@@ -72,6 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Login failed';
       setError(errorMessage);
+      console.log("AuthContext: Error set to:", errorMessage); // Add this
       setIsLoading(false);
       return false;
     }
@@ -79,12 +79,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (emailP: string, passwordP: string, usernameP?: string): Promise<boolean> => {
     setIsLoading(true);
-    setError(null);
+    setError(null); // Clear previous errors
     try {
       const payload: any = { email: emailP, password: passwordP };
       if (usernameP) payload.username = usernameP;
       await apiClient.post('/auth/register', payload);
-      // Registration successful, but user needs to login separately
       setIsLoading(false);
       return true; 
     } catch (err: any) {
@@ -98,16 +97,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
+    setError(null); // Clear errors on logout
     localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
-    // Optionally, redirect to home or login page
-    // No API call needed for stateless JWT logout unless you have server-side sessions/revocation
   };
   
-  // Optional: Function to verify token with /me endpoint (e.g., on app load)
-  // const verifyAuth = async () => { ... }
-
-  const value = { user, token, isLoading, error, login, register, logout };
+  const value = { user, token, isLoading, error, login, register, logout, clearError }; 
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

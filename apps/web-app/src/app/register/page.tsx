@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, FormEvent, useEffect, useRef  } from 'react';
-import { useRouter , usePathname} from 'next/navigation';
+import { useRouter, usePathname  } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext'; // Using path alias
 import {
   Container,
@@ -15,16 +15,20 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error: authError, user ,clearError } = useAuth(); 
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const pathname = usePathname();
   const mountedPathname = useRef(pathname);
-  const router = useRouter();
-  const hasSubmittedOnThisPageRef = useRef(false);
 
-  useEffect(() => {
+  // isLoading from useAuth now represents *both* initial load and API call loading
+  const { register, isLoading, error: authError, user, clearError } = useAuth();
+  const router = useRouter();
+
+    useEffect(() => {
     // If the pathname we are currently on is different from the one when this effect was last set up for a path change,
     // AND an error exists, it means we navigated here with a stale error.
     if (pathname !== mountedPathname.current && authError) {
@@ -37,37 +41,46 @@ export default function LoginPage() {
   // Redirect if user is already logged in (after initial auth check is done)
   useEffect(() => {
     if (!isLoading && user) { // Check !isLoading to avoid redirect during initial auth load
-      router.replace('/my-urls'); 
+      router.replace('/my-urls');
     }
   }, [user, isLoading, router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const success = await login(email, password); // login now sets its own isLoading and clears error
+    setFormError(null); 
+
+    if (password !== confirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 8) {
+      setFormError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    const effectiveUsername = username.trim() === '' ? undefined : username.trim();
+    const success = await register(email, password, effectiveUsername); // register now sets its own isLoading
     if (success) {
-      router.push('/my-urls'); 
+      alert('Registration successful! Please log in.');
+      router.push('/login');
     }
   };
   
   // If initial auth state is loading, show a spinner
-  if (isLoading && !user && !authError) { 
-    // This condition tries to show loader only during the initial check if no user/error yet
-    // The isLoading from useAuth() is true during initial load AND during login API call.
-    // A more distinct "isAuthInitialized" state in AuthContext might be cleaner.
-    // For now, this will show spinner during login API call too.
+  if (isLoading && !user && !authError) {
+    // This condition might still show spinner during register API call
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress />
       </Box>
     );
   }
-  
-  // If user is loaded and present, this component shouldn't render the form (useEffect handles redirect)
-  // This prevents a "flash" of the form.
+
+  // If user is loaded and present, this component shouldn't render the form
   if (user) {
-      return ( // Or just null, but a loader gives feedback if redirect is slow
+      return (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-          <CircularProgress /> 
+          <CircularProgress />
           <Typography sx={{ml: 2}}>Redirecting...</Typography>
         </Box>
       );
@@ -76,7 +89,7 @@ export default function LoginPage() {
     <Container component="main" maxWidth="xs">
       <Paper elevation={3} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography component="h1" variant="h5">
-          Sign In
+          Sign Up
         </Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
           <TextField
@@ -90,39 +103,71 @@ export default function LoginPage() {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading} // Disabled during login API call
+            disabled={isLoading} // Disabled during register API call
+          />
+          <TextField
+            margin="normal"
+            fullWidth
+            id="username"
+            label="Username (Optional)"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={isLoading} // Disabled during register API call
           />
           <TextField
             margin="normal"
             required
             fullWidth
             name="password"
-            label="Password"
+            label="Password (min. 8 characters)"
             type="password"
             id="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading} // Disabled during login API call
+            disabled={isLoading} // Disabled during register API call
           />
-          {authError && (
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            id="confirmPassword"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isLoading} // Disabled during register API call
+            error={!!formError && formError.includes("Passwords do not match")}
+          />
+
+          {formError && (
+            <Alert severity="warning" sx={{ width: '100%', mt: 2, mb: 1 }}>
+              {formError}
+            </Alert>
+          )}
+          {authError && !formError && (
             <Alert severity="error" sx={{ width: '100%', mt: 2, mb: 1 }}>
               {authError}
             </Alert>
           )}
+          
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={isLoading} // Disabled during login API call
+            disabled={isLoading} // Disabled during register API call
           >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
-            <Link href="/register" passHref>
+            <Link href="/login" passHref>
               <Typography component="span" variant="body2" sx={{ cursor: 'pointer' }}>
-                {"Don't have an account? Sign Up"}
+                {"Already have an account? Sign In"}
               </Typography>
             </Link>
           </Box>
