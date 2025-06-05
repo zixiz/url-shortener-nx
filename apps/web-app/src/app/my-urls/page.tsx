@@ -11,6 +11,7 @@ import apiClient from '@/lib/apiClient';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import Link from 'next/link'; 
+import { useSnackbar } from '@/context/SnackbarContext';
 
 interface ShortenedUrl {
   id: string;
@@ -27,6 +28,7 @@ export default function MyUrlsPage() {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoadingUrls, setIsLoadingUrls] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     const fetchUrls = async () => {
@@ -57,10 +59,10 @@ export default function MyUrlsPage() {
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => alert('Short URL copied to clipboard!'))
+      .then(() => showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
-        alert('Failed to copy URL.');
+        showSnackbar({ message: 'Failed to copy URL.', severity: 'error' });
       });
   };
 

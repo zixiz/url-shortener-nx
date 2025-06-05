@@ -11,6 +11,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useAuth } from '@/context/AuthContext'; // Using path alias
 import apiClient from '@/lib/apiClient'; // Using path alias
+import { useSnackbar } from '@/context/SnackbarContext';
 
 interface CreatedUrlResponse {
   id: string;
@@ -36,6 +37,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
+  const { showSnackbar } = useSnackbar();
 
   const { user: authenticatedUser, isLoading: isAuthLoading } = useAuth(); 
 
@@ -92,10 +94,10 @@ export default function HomePage() {
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => alert('Short URL copied to clipboard!'))
+      .then(() =>showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
-        alert('Failed to copy URL.');
+        showSnackbar({ message: 'Failed to copy URL.', severity: 'error' });
       });
   };
   

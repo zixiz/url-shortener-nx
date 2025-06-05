@@ -14,6 +14,7 @@ import {
   Paper,
 } from '@mui/material';
 import Link from 'next/link';
+import { useSnackbar } from '@/context/SnackbarContext';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const pathname = usePathname();
   const mountedPathname = useRef(pathname);
+  const { showSnackbar } = useSnackbar();
 
   // isLoading from useAuth now represents *both* initial load and API call loading
   const { register, isLoading, error: authError, user, clearError } = useAuth();
@@ -61,7 +63,7 @@ export default function RegisterPage() {
     const effectiveUsername = username.trim() === '' ? undefined : username.trim();
     const success = await register(email, password, effectiveUsername); // register now sets its own isLoading
     if (success) {
-      alert('Registration successful! Please log in.');
+      showSnackbar({ message: 'Registration successful! Please log in.', severity: 'success' });
       router.push('/login');
     }
   };
