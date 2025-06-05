@@ -47,7 +47,6 @@ export default function MyUrlsPage() {
       setErrorFetchingUrls(null);
       try {
         const response = await apiClient.get<ShortenedUrl[]>('/urls/mine'); // apiClient includes token
-         await new Promise(resolve => setTimeout(resolve,5000)); // 2-second delay
         setUrls(response.data);
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch your URLs.';

@@ -14,6 +14,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean; // This will represent initial auth load AND API call loading
   error: string | null;
+  errorSource: string | null; // NEW: track source of error
   login: (emailP: string, passwordP: string) => Promise<boolean>;
   register: (emailP: string, passwordP: string, usernameP?: string) => Promise<boolean>;
   logout: () => void;
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // True initially for localStorage check
   const [error, setError] = useState<string | null>(null);
+  const [errorSource, setErrorSource] = useState<string | null>(null); // NEW
 
   useEffect(() => {
     const persistedToken = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -49,14 +51,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false); // Done with initial load attempt
   }, []);
 
-  const clearError = () => { // <--- DEFINE clearError
-    // console.log("AuthContext: Clearing error");
+  const clearError = () => {
     setError(null);
+    setErrorSource(null); // NEW
   };
 
   const login = async (emailP: string, passwordP: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null); // Clear previous errors
+    setErrorSource(null); // NEW
     try {
       const response = await apiClient.post('/auth/login', { email: emailP, password: passwordP });
       const { token: apiToken, userId, email, username } = response.data;
@@ -71,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Login failed';
       setError(errorMessage);
-      console.log("AuthContext: Error set to:", errorMessage); // Add this
+      setErrorSource('login'); // NEW
       setIsLoading(false);
       return false;
     }
@@ -80,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (emailP: string, passwordP: string, usernameP?: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null); // Clear previous errors
+    setErrorSource(null); // NEW
     try {
       const payload: any = { email: emailP, password: passwordP };
       if (usernameP) payload.username = usernameP;
@@ -89,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
       setError(errorMessage);
+      setErrorSource('register'); // NEW
       setIsLoading(false);
       return false;
     }
@@ -102,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(AUTH_USER_KEY);
   };
   
-  const value = { user, token, isLoading, error, login, register, logout, clearError }; 
+  const value = { user, token, isLoading, error, errorSource, login, register, logout, clearError }; 
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

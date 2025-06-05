@@ -18,28 +18,43 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error: authError, user ,clearError } = useAuth(); 
+  const { login, isLoading, error: authError, errorSource, user ,clearError } = useAuth(); 
   const pathname = usePathname();
   const mountedPathname = useRef(pathname);
   const router = useRouter();
   const hasSubmittedOnThisPageRef = useRef(false);
 
   useEffect(() => {
-    // If the pathname we are currently on is different from the one when this effect was last set up for a path change,
-    // AND an error exists, it means we navigated here with a stale error.
+    // Only clear error if we're navigating from a different page
     if (pathname !== mountedPathname.current && authError) {
-      // console.log(`Navigated to ${pathname} from ${mountedPathname.current}, clearing stale error: ${authError}`);
       clearError();
     }
-    mountedPathname.current = pathname; // Update for the next potential path change
-  }, [pathname, authError, clearError]); // Rerun if path changes or if authError changes
+    mountedPathname.current = pathname;
+
+    // Don't clear error on unmount to prevent flash
+    return () => {
+      // Only clear if we're actually navigating away
+      if (pathname !== mountedPathname.current) {
+        clearError();
+      }
+    };
+  }, [pathname, authError, clearError]);
 
   // Redirect if user is already logged in (after initial auth check is done)
   useEffect(() => {
-    if (!isLoading && user) { // Check !isLoading to avoid redirect during initial auth load
+    if (!isLoading && user) {
       router.replace('/my-urls'); 
     }
   }, [user, isLoading, router]);
+
+  useEffect(() => {
+    if (authError && errorSource === 'login') {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [authError, errorSource, clearError]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -105,7 +120,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading} // Disabled during login API call
           />
-          {authError && (
+          {authError && errorSource === 'login' && (
             <Alert severity="error" sx={{ width: '100%', mt: 2, mb: 1 }}>
               {authError}
             </Alert>
@@ -120,7 +135,7 @@ export default function LoginPage() {
             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
-            <Link href="/register" passHref>
+            <Link href="/register" passHref onClick={clearError}>
               <Typography component="span" variant="body2" sx={{ cursor: 'pointer' }}>
                 {"Don't have an account? Sign Up"}
               </Typography>
