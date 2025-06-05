@@ -1,16 +1,18 @@
+// apps/web-app/src/app/my-urls/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import AuthGuard from '../../components/AuthGuard';
 import {
   Typography, Container, Box, CircularProgress, Alert,
-  List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider, Link as MuiLink
-} from '@mui/material'; // Added MuiLink, Divider
+  List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider, Link as MuiLink,
+  Skeleton // Import Skeleton
+} from '@mui/material';
+import Link from 'next/link'; // For the MuiLink component
 import { useAuth } from '@/context/AuthContext';
 import apiClient from '@/lib/apiClient';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import Link from 'next/link'; 
 import { useSnackbar } from '@/context/SnackbarContext';
 
 interface ShortenedUrl {
@@ -24,38 +26,47 @@ interface ShortenedUrl {
 }
 
 export default function MyUrlsPage() {
-  const { user, isLoading: isAuthLoading, token } = useAuth();
+  const { user, isLoading: isAuthContextLoading, token } = useAuth(); // Renamed for clarity
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
-  const [isLoadingUrls, setIsLoadingUrls] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingUrls, setIsLoadingUrls] = useState(true); // Loading state for fetching URLs
+  const [errorFetchingUrls, setErrorFetchingUrls] = useState<string | null>(null); // Error state for fetching URLs
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     const fetchUrls = async () => {
-      if (!user || !token) {
+      // No need to check !user or !token here if AuthGuard is effective,
+      // but it's a good defensive measure. AuthGuard should prevent this page
+      // from rendering its core content if not authenticated.
+      if (!token) { // Token is a better check than user object alone for API calls
         setIsLoadingUrls(false);
+        setErrorFetchingUrls("Not authenticated. Cannot fetch URLs."); // Should not happen if AuthGuard works
         return;
       }
+
       setIsLoadingUrls(true);
-      setError(null);
+      setErrorFetchingUrls(null);
       try {
-        const response = await apiClient.get<ShortenedUrl[]>('/urls/mine');
+        const response = await apiClient.get<ShortenedUrl[]>('/urls/mine'); // apiClient includes token
+         await new Promise(resolve => setTimeout(resolve,5000)); // 2-second delay
         setUrls(response.data);
       } catch (err: any) {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch URLs';
-        setError(errorMessage);
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch your URLs.';
+        setErrorFetchingUrls(errorMessage);
         console.error("Error fetching user URLs:", err);
       } finally {
         setIsLoadingUrls(false);
       }
     };
 
-    if (!isAuthLoading && user && token) {
+    // Fetch URLs only when initial auth check is done AND user/token are present
+    if (!isAuthContextLoading && token) {
       fetchUrls();
-    } else if (!isAuthLoading && !user) {
-      setIsLoadingUrls(false);
+    } else if (!isAuthContextLoading && !token) {
+      // If auth is resolved and there's no token (user not logged in), don't try to fetch.
+      // AuthGuard should have redirected.
+      setIsLoadingUrls(false); 
     }
-  }, [user, token, isAuthLoading]);
+  }, [token, isAuthContextLoading]); // Depend on token and initial auth loading status
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -66,12 +77,33 @@ export default function MyUrlsPage() {
       });
   };
 
-  if (isAuthLoading) {
-    return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 128px)' }}><CircularProgress /></Box> );
-  }
-  if (!user) { // AuthGuard should handle this, but as a fallback
-    return ( <Container maxWidth="md"><Box sx={{ my: 4, textAlign: 'center' }}><Typography variant="h6">Please log in to view your URLs.</Typography></Box></Container> );
-  }
+  // Function to render skeleton placeholders
+  const renderSkeletons = () => (
+    <Paper elevation={2} sx={{ mt: 2 }}>
+      <List dense>
+        {[...Array(3)].map((_, index) => ( // Render 3 skeleton items
+          <React.Fragment key={`skeleton-${index}`}>
+            <ListItem sx={{ py: 1.5 }}>
+              <ListItemText
+                primary={<Skeleton variant="text" width="60%" sx={{ fontSize: '1rem' }} />}
+                secondary={
+                  <>
+                    <Skeleton variant="text" width="80%" sx={{ mt: 0.5 }} />
+                    <Skeleton variant="text" width="40%" sx={{ mt: 0.5 }} />
+                  </>
+                }
+              />
+              <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
+                <Skeleton variant="circular" width={24} height={24} sx={{mr: 0.5}} />
+                <Skeleton variant="circular" width={24} height={24} />
+              </ListItemSecondaryAction>
+            </ListItem>
+            {index < 2 && <Divider component="li" variant="inset" />}
+          </React.Fragment>
+        ))}
+      </List>
+    </Paper>
+  );
 
   return (
     <AuthGuard> 
@@ -80,34 +112,29 @@ export default function MyUrlsPage() {
           <Typography variant="h4" component="h1" gutterBottom>
             My Shortened URLs
           </Typography>
-          <Typography sx={{mt: 1, mb: 3}}>Welcome, {user.username || user.email}!</Typography>
+          {/* Display welcome message once user context is loaded and user exists */}
+          {!isAuthContextLoading && user && (
+            <Typography sx={{mt: 1, mb: 3}}>Welcome, {user.username || user.email}!</Typography>
+          )}
           
-          {isLoadingUrls && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}><CircularProgress /></Box>
-          )}
-
-          {!isLoadingUrls && error && (
-            <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
-          )}
-
-          {!isLoadingUrls && !error && urls.length === 0 && (
+          {/* Display Skeleton or Actual Content based on isLoadingUrls */}
+          {isLoadingUrls ? (
+            renderSkeletons()
+          ) : errorFetchingUrls ? (
+            <Alert severity="error" sx={{ my: 2 }}>{errorFetchingUrls}</Alert>
+          ) : urls.length === 0 ? (
             <Typography sx={{ mt: 3, textAlign: 'center' }}>
               You haven't created any short URLs yet. Go ahead and <MuiLink component={Link} href="/">create some</MuiLink>!
             </Typography>
-          )}
-
-          {!isLoadingUrls && !error && urls.length > 0 && (
-            <Paper elevation={2} sx={{ mt: 2 }}> {/* Added Paper for better visual grouping */}
-              <List dense> {/* `dense` makes the list items a bit more compact */}
+          ) : (
+            <Paper elevation={2} sx={{ mt: 2 }}>
+              <List dense>
                 {urls.map((url, index) => (
                   <React.Fragment key={url.id}>
                     <ListItem
                       sx={{ 
-                        py: 1.5, // Add some padding
-                        // Optional: hover effect
-                        // '&:hover': {
-                        //   backgroundColor: (theme) => theme.palette.action.hover,
-                        // },
+                        py: 1.5,
+                        // '&:hover': { backgroundColor: (theme) => theme.palette.action.hover }, // Optional hover
                       }}
                     >
                       <ListItemText
@@ -116,7 +143,7 @@ export default function MyUrlsPage() {
                             href={url.fullShortUrl} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }} // Use theme color
+                            sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }}
                           >
                             {url.fullShortUrl}
                           </MuiLink>
@@ -132,7 +159,7 @@ export default function MyUrlsPage() {
                           </>
                         }
                       />
-                      <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}> {/* Adjust spacing */}
+                      <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
                         <Tooltip title="Copy Short URL">
                           <IconButton edge="end" size="small" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
                             <ContentCopyIcon fontSize="small" />
@@ -153,7 +180,7 @@ export default function MyUrlsPage() {
                         </Tooltip>
                       </ListItemSecondaryAction>
                     </ListItem>
-                    {index < urls.length - 1 && <Divider component="li" variant="inset" />} {/* variant="inset" or fullWidth */}
+                    {index < urls.length - 1 && <Divider component="li" variant="inset" />}
                   </React.Fragment>
                 ))}
               </List>
