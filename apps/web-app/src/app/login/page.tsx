@@ -24,6 +24,7 @@ export default function LoginPage() {
   const router = useRouter();
   const hasSubmittedOnThisPageRef = useRef(false);
 
+  
   useEffect(() => {
     // Only clear error if we're navigating from a different page
     if (pathname !== mountedPathname.current && authError) {
@@ -46,15 +47,6 @@ export default function LoginPage() {
       router.replace('/my-urls'); 
     }
   }, [user, isLoading, router]);
-
-  useEffect(() => {
-    if (authError && errorSource === 'login') {
-      const timer = setTimeout(() => {
-        clearError();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [authError, errorSource, clearError]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -104,7 +96,10 @@ export default function LoginPage() {
             autoComplete="email"
             autoFocus
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (authError && errorSource === 'login') clearError();
+            }}
             disabled={isLoading} // Disabled during login API call
           />
           <TextField
@@ -117,7 +112,10 @@ export default function LoginPage() {
             id="password"
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (authError && errorSource === 'login') clearError();
+            }}
             disabled={isLoading} // Disabled during login API call
           />
           {authError && errorSource === 'login' && (

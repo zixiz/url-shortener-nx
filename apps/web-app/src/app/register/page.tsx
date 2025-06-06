@@ -30,7 +30,8 @@ export default function RegisterPage() {
   const { register, isLoading, error: authError, errorSource, user, clearError } = useAuth();
   const router = useRouter();
 
-    useEffect(() => {
+  
+  useEffect(() => {
     // Only clear error if we're navigating from a different page
     if (pathname !== mountedPathname.current && authError) {
       clearError();
@@ -52,15 +53,6 @@ export default function RegisterPage() {
       router.replace('/my-urls');
     }
   }, [user, isLoading, router]);
-
-  useEffect(() => {
-    if (authError && errorSource === 'register') {
-      const timer = setTimeout(() => {
-        clearError();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [authError, errorSource, clearError]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -119,7 +111,10 @@ export default function RegisterPage() {
             autoComplete="email"
             autoFocus
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (authError && errorSource === 'register') clearError();
+            }}
             disabled={isLoading} // Disabled during register API call
           />
           <TextField
@@ -130,7 +125,10 @@ export default function RegisterPage() {
             name="username"
             autoComplete="username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (authError && errorSource === 'register') clearError();
+            }}
             disabled={isLoading} // Disabled during register API call
           />
           <TextField
@@ -143,7 +141,10 @@ export default function RegisterPage() {
             id="password"
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (authError && errorSource === 'register') clearError();
+            }}
             disabled={isLoading} // Disabled during register API call
           />
           <TextField
@@ -156,7 +157,10 @@ export default function RegisterPage() {
             id="confirmPassword"
             autoComplete="new-password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (authError && errorSource === 'register') clearError();
+            }}
             disabled={isLoading} // Disabled during register API call
             error={!!formError && formError.includes("Passwords do not match")}
           />
