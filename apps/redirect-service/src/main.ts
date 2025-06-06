@@ -4,7 +4,7 @@ dotenv.config();
 import express from 'express';
 import { logger } from './config/logger.js';
 import { connectRedis } from './config/redis.js';
-import { startRabbitMQConsumer } from './rabbitmq-consumer.js';
+import { startRabbitMQ  } from './rabbitmq-consumer.js';
 import redirectRoutes from './routes/redirect.routes.js';
 
 // Redirect route will be imported here
@@ -22,7 +22,7 @@ async function bootstrap() {
   }
 
   try {
-    await startRabbitMQConsumer(); // Connects to RabbitMQ and starts listening
+    await startRabbitMQ (); // Connects to RabbitMQ and starts listening
     logger.info('Redirect Service: RabbitMQ consumer started.');
   } catch (error) {
     logger.error('Redirect Service: Error starting RabbitMQ consumer', error);

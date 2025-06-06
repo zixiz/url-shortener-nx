@@ -11,6 +11,7 @@ import { connectRedis } from './config/redis.js';
 import authRoutes from './routes/auth.routes.js';
 import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
+import { startClickEventConsumer } from './rabbitmq-click-consumer.js'; 
 
 // Auth and URL routes will be imported here later
 
@@ -19,6 +20,7 @@ async function bootstrap() {
 
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
   logger.info(`CORS enabled for origin: [${frontendUrl}]`); 
+
   app.use(cors({
     origin: frontendUrl, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], 
@@ -41,6 +43,13 @@ async function bootstrap() {
     logger.info('Management Service: Connected to RabbitMQ successfully.');
   } catch (error) {
     logger.error('Management Service: Error connecting to RabbitMQ', error);
+  }
+
+  try {
+    await startClickEventConsumer(); 
+    logger.info('Management Service: Click event consumer started successfully.');
+  } catch (error) {
+    logger.error('Management Service: Error starting click event consumer', error);
   }
 
   try {

@@ -113,27 +113,18 @@ export class UrlController {
 
   getUrlStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { shortId } = req.params;
+    logger.info(`Stats request for ${shortId} (from DB)`); // Log source
     try {
-      const redisClient = getRedisClient();
-      if (!redisClient) { // Defensive check if getRedisClient can return null (it shouldn't if bootstrap is correct)
-        logger.error('Redis client not available for getUrlStats');
-        return next(new Error('Server error: Stats service temporarily unavailable.'));
-      }
-      const clickCountStr = await redisClient.get(`clicks:${shortId}`);
-      const clickCount = clickCountStr ? parseInt(clickCountStr, 10) : 0;
-
-      // Optionally, fetch URL details from DB to confirm existence or show longUrl
       const urlDetails = await this.urlRepository.findOneBy({ shortId });
-      if (!urlDetails && clickCount === 0) { 
-         // If we have no clicks and no DB entry, it's likely an invalid shortId
+
+      if (!urlDetails) { 
          res.status(404).json({ message: 'Short URL not found.' });
          return;
       }
-
       res.status(200).json({
-        shortId,
-        longUrl: urlDetails?.longUrl, // Show longUrl if found
-        clickCount,
+        shortId: urlDetails.shortId,
+        longUrl: urlDetails.longUrl,
+        clickCount: urlDetails.clickCount, // From PostgreSQL
       });
     } catch (err) {
       logger.error('Error getting URL stats', { shortId, error: err instanceof Error ? err.message : String(err) });

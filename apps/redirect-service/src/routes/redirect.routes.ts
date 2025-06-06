@@ -1,43 +1,91 @@
+// apps/redirect-service/src/routes/redirect.routes.ts
 import { Router, Request, Response, NextFunction } from 'express';
 import { getRedisClient } from '../config/redis.js';
 import { logger } from '../config/logger.js';
+import { getPublisherChannel } from '../rabbitmq-consumer.js'; // Assuming this file exports it
 
 const router = Router();
+const CLICK_EVENTS_QUEUE = process.env.RABBITMQ_CLICK_EVENTS_QUEUE || 'url_clicked_events_queue';
 
 router.get('/:shortId', async (req: Request, res: Response, next: NextFunction) => {
   const { shortId } = req.params;
 
-  if (!shortId || shortId.length > 20) { // Basic validation for shortId format/length
-    // (assuming nanoid(11) is used, so length should be reasonable)
-    logger.warn('Redirect attempt with invalid shortId format', { shortId });
-    return res.status(400).send('Invalid short URL format.');
+  // Basic validation for shortId
+  if (!shortId || typeof shortId !== 'string' || shortId.length === 0 || shortId.length > 20) { 
+    logger.warn('Redirect attempt with invalid or missing shortId format', { shortId });
+    // Don't call next() here, as we are sending a response.
+    return res.status(400).type('text/plain').send('Invalid short URL format.');
   }
 
-  logger.debug(`Redirect request for shortId: ${shortId}`);
+  logger.debug(`Redirect Service: Request for shortId: ${shortId}`);
 
   try {
     const redisClient = getRedisClient();
     const longUrl = await redisClient.get(`url:${shortId}`);
 
     if (longUrl) {
-      logger.info(`Redirecting ${shortId} to ${longUrl.substring(0,70)}...`);
-      res.redirect(302, longUrl); // Perform the redirect (302 for temporary, 301 for permanent)
+      logger.info(`Redirect Service: Redirecting ${shortId} to ${longUrl.substring(0,70)}...`);
+      res.redirect(302, longUrl); 
 
-      // Asynchronously increment click count in Redis.
-      // No need to await this for the redirect response. Fire and forget.
-      redisClient.incr(`clicks:${shortId}`).catch(err => {
-        logger.error('Failed to increment click count in Redis', { shortId, error: err });
-      });
+      // Publish click event to RabbitMQ
+      try {
+        const publisher = getPublisherChannel();
+        // Consumer (management-service) should ideally assert the queue.
+        // Publisher can assert too for robustness, especially if it might be the first to send.
+        await publisher.assertQueue(CLICK_EVENTS_QUEUE, { durable: true }); 
+        
+        const clickEvent = {
+          shortId: shortId,
+          timestamp: new Date().toISOString(),
+          // Consider adding other relevant, non-sensitive request details if needed for analytics
+          // userAgent: req.headers['user-agent'],
+          // referrer: req.headers['referer'],
+        };
+
+        const messageBuffer = Buffer.from(JSON.stringify(clickEvent));
+        
+        // Using ConfirmChannel, publish returns true on ACK, false on NACK/timeout
+        const published = publisher.sendToQueue(
+          CLICK_EVENTS_QUEUE,
+          messageBuffer,
+          { persistent: true }
+          // No direct callback here for sendToQueue with ConfirmChannel,
+          // await publisher.waitForConfirms(); would be used for explicit confirmation
+          // but for fire-and-forget, just sending is often enough.
+          // For better error handling on publish:
+          // if (publisher.sendToQueue(...)) { logger.debug(...) } else { logger.warn(...) }
+        );
+
+        if (published) {
+            logger.debug('Redirect Service: Click event sent to RabbitMQ queue', { shortId });
+        } else {
+            logger.warn('Redirect Service: Click event publish to RabbitMQ failed (channel buffer full or NACKed immediately)', { shortId });
+            // This scenario requires publisher confirms to be handled more robustly if 100% delivery is needed here.
+        }
+
+      } catch (mqError) {
+        logger.error('Redirect Service: Exception while trying to publish click event to RabbitMQ.', { 
+            shortId, 
+            error: mqError instanceof Error ? mqError.message : String(mqError) 
+        });
+      }
     } else {
-      logger.warn(`ShortId not found in Redis for redirection: ${shortId}`);
-      res.status(404).send('Short URL not found.');
+      logger.warn(`Redirect Service: ShortId not found in Redis for redirection: ${shortId}`);
+      // Don't call next() here
+      res.status(404).type('text/plain').send('Short URL not found.');
     }
   } catch (error) {
-    logger.error('Error during redirection:', { shortId, error });
-    // Pass to a generic error handler or send a generic error
-    // Avoid calling next(error) if you've already sent a response or want to control it here.
+    const err = error as Error;
+    logger.error('Redirect Service: Critical error during redirection process.', { 
+        shortId, 
+        errorMessage: err.message,
+        stack: err.stack
+    });
+    // If headers haven't been sent (e.g., Redis connection failed before res.redirect/res.status)
     if (!res.headersSent) {
-      res.status(500).send('Error processing your request.');
+      // Don't call next(error) here as we're sending a response.
+      // If you have a dedicated Express error handler middleware, you could call next(error).
+      res.status(500).type('text/plain').send('Error processing your request.');
     }
   }
 });
