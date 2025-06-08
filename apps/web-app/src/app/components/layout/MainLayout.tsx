@@ -1,23 +1,39 @@
 'use client'; 
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Container, Box, Button, CircularProgress } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ThemeToggleButton from '../ThemeToggleButton';
-import { useAuth } from '@/context/AuthContext'; 
+import { useAppSelector, useAppDispatch } from '../../store/hooks'; 
+import { logout as logoutAction, initialAuthCheckCompleted } from '../../store/authSlice';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout, isLoading: isAuthLoading } = useAuth();
-  const isAuthenticated = !!user;
- const router = useRouter();
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const { user, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const isAuthenticated = !!user; 
+
+  // This useEffect in ThemeRegistry is now primary for dispatching initialAuthCheckCompleted.
+  // Keeping a similar check here can be a safeguard if ThemeRegistry's effect order is different.
+  // However, ideally, it's dispatched once.
+  useEffect(() => {
+      if(!isInitialAuthChecked) {
+          // console.log("MainLayout: isInitialAuthChecked is false, dispatching initialAuthCheckCompleted");
+          // dispatch(initialAuthCheckCompleted()); // Dispatching from ThemeRegistry is likely sufficient
+      }
+    }, [dispatch, isInitialAuthChecked]);
+
 
   const handleLogout = () => {
-    logout();
-    router.push('/');
+    dispatch(logoutAction()); 
+    router.push('/'); 
   };
 
-  if (isAuthLoading) {
+  // If initial auth state hasn't been checked yet by Redux, show a full page loader.
+  // This prevents UI flash.
+  if (!isInitialAuthChecked) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />

@@ -1,192 +1,109 @@
 'use client';
 
-import React, { useState, FormEvent, useEffect, useRef  } from 'react';
-import { useRouter, usePathname  } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Using path alias
+import React, { useState, FormEvent, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { registerUser, clearAuthError } from '../store/authSlice';
+import { useSnackbar } from '@/context/SnackbarContext'; // For success message
 import {
-  Container,
-  Box,
-  TextField,
-  Button,
-  Typography,
-  CircularProgress,
-  Alert,
-  Paper,
+  Container, Box, TextField, Button, Typography,
+  CircularProgress, Alert, Paper
 } from '@mui/material';
 import Link from 'next/link';
-import { useSnackbar } from '@/context/SnackbarContext';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-  const pathname = usePathname();
-  const mountedPathname = useRef(pathname);
+  const [clientFormError, setClientFormError] = useState<string | null>(null); // For client validation
+  const [apiPageError, setApiPageError] = useState<string | null>(null); // For API errors
+
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  // isLoading from useAuth now represents *both* initial load and API call loading
-  const { register, isLoading, error: authError, errorSource, user, clearError } = useAuth();
-  const router = useRouter();
+  const { user, isLoading: isAuthApiLoading, error: authApiErrorFromSlice, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
-  
+  // Clear Redux auth error when component mounts
   useEffect(() => {
-    // Only clear error if we're navigating from a different page
-    if (pathname !== mountedPathname.current && authError) {
-      clearError();
+    if (authApiErrorFromSlice) {
+      dispatch(clearAuthError());
     }
-    mountedPathname.current = pathname;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
 
-    // Don't clear error on unmount to prevent flash
-    return () => {
-      // Only clear if we're actually navigating away
-      if (pathname !== mountedPathname.current) {
-        clearError();
-      }
-    };
-  }, [pathname, authError, clearError]);
-
-  // Redirect if user is already logged in (after initial auth check is done)
+  // Redirect if user is already logged in
   useEffect(() => {
-    if (!isLoading && user) { // Check !isLoading to avoid redirect during initial auth load
+    if (isInitialAuthChecked && user) {
       router.replace('/my-urls');
     }
-  }, [user, isLoading, router]);
+  }, [user, isInitialAuthChecked, router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setFormError(null); 
+    setClientFormError(null);
+    setApiPageError(null);
 
     if (password !== confirmPassword) {
-      setFormError("Passwords do not match.");
+      setClientFormError("Passwords do not match.");
       return;
     }
     if (password.length < 8) {
-      setFormError("Password must be at least 8 characters long.");
+      setClientFormError("Password must be at least 8 characters long.");
       return;
     }
 
     const effectiveUsername = username.trim() === '' ? undefined : username.trim();
-    const success = await register(email, password, effectiveUsername); // register now sets its own isLoading
-    if (success) {
+    const resultAction = await dispatch(registerUser({ emailP: email, passwordP: password, usernameP: effectiveUsername }));
+
+    if (registerUser.fulfilled.match(resultAction)) {
       showSnackbar({ message: 'Registration successful! Please log in.', severity: 'success' });
       router.push('/login');
+    } else if (registerUser.rejected.match(resultAction)) {
+      setApiPageError(resultAction.payload || "Registration failed. Please try again.");
     }
   };
-  
-  // If initial auth state is loading, show a spinner
-  if (isLoading && !user && !authError) {
-    // This condition might still show spinner during register API call
+
+  // Loading states
+  if (!isInitialAuthChecked) {
+    return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box> );
+  }
+  if (isInitialAuthChecked && user) {
+    return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /><Typography sx={{ml: 2}}>Redirecting...</Typography></Box> );
+  }
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // If user is loaded and present, this component shouldn't render the form
-  if (user) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-          <CircularProgress />
-          <Typography sx={{ml: 2}}>Redirecting...</Typography>
-        </Box>
-      );
-  }
-  return (
     <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">
-          Sign Up
-        </Typography>
+      <Paper elevation={3} sx={{ marginTop: 8, padding: 4, /* ... */ }}>
+        <Typography component="h1" variant="h5">Sign Up</Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (authError && errorSource === 'register') clearError();
-            }}
-            disabled={isLoading} // Disabled during register API call
-          />
-          <TextField
-            margin="normal"
-            fullWidth
-            id="username"
-            label="Username (Optional)"
-            name="username"
-            autoComplete="username"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              if (authError && errorSource === 'register') clearError();
-            }}
-            disabled={isLoading} // Disabled during register API call
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password (min. 8 characters)"
-            type="password"
-            id="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (authError && errorSource === 'register') clearError();
-            }}
-            disabled={isLoading} // Disabled during register API call
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="confirmPassword"
-            label="Confirm Password"
-            type="password"
-            id="confirmPassword"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              if (authError && errorSource === 'register') clearError();
-            }}
-            disabled={isLoading} // Disabled during register API call
-            error={!!formError && formError.includes("Passwords do not match")}
-          />
+          {/* TextFields for email, username, password, confirmPassword */}
+          {/* Ensure disabled={isAuthApiLoading} */}
+          <TextField margin="normal" required fullWidth id="email" label="Email Address" value={email} onChange={(e) => { setEmail(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
+          <TextField margin="normal" fullWidth id="username" value={username} label="Username" onChange={(e) => { setUsername(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
+          <TextField margin="normal" required fullWidth type="password" name="password" label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setClientFormError(null); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
+          <TextField margin="normal" required fullWidth type="password" name="confirmPassword" label="Confirm Password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setClientFormError(null); setApiPageError(null); }} disabled={isAuthApiLoading} error={!!clientFormError && clientFormError.includes("Passwords do not match")} /* ... */ />
 
-          {formError && (
-            <Alert severity="warning" sx={{ width: '100%', mt: 2, mb: 1 }}>
-              {formError}
-            </Alert>
+          {clientFormError && (
+            <Alert severity="warning" sx={{ width: '100%', mt: 2, mb: 1 }}>{clientFormError}</Alert>
           )}
-          {authError && errorSource === 'register' && !formError && (
-            <Alert severity="error" sx={{ width: '100%', mt: 2, mb: 1 }}>
-              {authError}
-            </Alert>
+          {apiPageError && !clientFormError && (
+            <Alert severity="error" sx={{ width: '100%', mt: 2, mb: 1 }}>{apiPageError}</Alert>
           )}
           
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={isLoading} // Disabled during register API call
-          >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={isAuthApiLoading}>
+            {isAuthApiLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
           </Button>
           <Box sx={{ textAlign: 'center' }}>
-            <Link href="/login" passHref onClick={clearError}>
+            <Link 
+              href="/login" 
+              passHref
+              onClick={() => { // Clear this page's errors when navigating away
+                setClientFormError(null);
+                setApiPageError(null);
+                dispatch(clearAuthError()); // Also clear global Redux error
+              }}
+            >
               <Typography component="span" variant="body2" sx={{ cursor: 'pointer' }}>
                 {"Already have an account? Sign In"}
               </Typography>

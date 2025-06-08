@@ -2,18 +2,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AuthGuard from '../../components/AuthGuard';
+// Corrected AuthGuard import path assuming it's in src/app/components/
+import AuthGuard from '../../components/AuthGuard'; // Adjust path as necessary
 import {
   Typography, Container, Box, CircularProgress, Alert,
   List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider, Link as MuiLink,
-  Skeleton // Import Skeleton
+  Skeleton 
 } from '@mui/material';
-import Link from 'next/link'; // For the MuiLink component
-import { useAuth } from '@/context/AuthContext';
-import apiClient from '@/lib/apiClient';
+import Link from 'next/link'; 
+// Redux Hooks
+import { useAppSelector } from '../store/hooks'; // Adjust path to your typed Redux hooks
+import apiClient from '../../lib/apiClient'; // Adjust path to your API client
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useSnackbar } from '@/context/SnackbarContext';
+import { useSnackbar } from '../../context/SnackbarContext';
 
 interface ShortenedUrl {
   id: string;
@@ -22,31 +24,34 @@ interface ShortenedUrl {
   fullShortUrl: string;
   clickCount: number;
   createdAt: string;
-  userId?: string | null;
+  userId?: string | null; // This will match the authenticated user's ID
 }
 
 export default function MyUrlsPage() {
-  const { user, isLoading: isAuthContextLoading, token } = useAuth(); // Renamed for clarity
+  // Get auth state from Redux store
+  const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth); 
+
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
-  const [isLoadingUrls, setIsLoadingUrls] = useState(true); // Loading state for fetching URLs
-  const [errorFetchingUrls, setErrorFetchingUrls] = useState<string | null>(null); // Error state for fetching URLs
+  const [isLoadingUrls, setIsLoadingUrls] = useState(true); // Loading state specifically for fetching these URLs
+  const [errorFetchingUrls, setErrorFetchingUrls] = useState<string | null>(null);
   const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     const fetchUrls = async () => {
-      // No need to check !user or !token here if AuthGuard is effective,
-      // but it's a good defensive measure. AuthGuard should prevent this page
-      // from rendering its core content if not authenticated.
-      if (!token) { // Token is a better check than user object alone for API calls
+      // Token is essential for this authenticated endpoint
+      if (!token) { 
         setIsLoadingUrls(false);
-        setErrorFetchingUrls("Not authenticated. Cannot fetch URLs."); // Should not happen if AuthGuard works
+        // AuthGuard should ideally prevent reaching here if not authenticated.
+        // If somehow reached, set an error or handle appropriately.
+        // setErrorFetchingUrls("Authentication token not found. Please log in.");
         return;
       }
 
       setIsLoadingUrls(true);
       setErrorFetchingUrls(null);
       try {
-        const response = await apiClient.get<ShortenedUrl[]>('/urls/mine'); // apiClient includes token
+        // apiClient will automatically include the Authorization header with the token
+        const response = await apiClient.get<ShortenedUrl[]>('/urls/mine');
         setUrls(response.data);
       } catch (err: any) {
         const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch your URLs.';
@@ -57,15 +62,17 @@ export default function MyUrlsPage() {
       }
     };
 
-    // Fetch URLs only when initial auth check is done AND user/token are present
-    if (!isAuthContextLoading && token) {
+    // Fetch URLs only when initial auth check by Redux is complete AND a token is present.
+    // The `user` object check is also good to ensure user data is loaded.
+    if (isInitialAuthChecked && token && user) {
       fetchUrls();
-    } else if (!isAuthContextLoading && !token) {
-      // If auth is resolved and there's no token (user not logged in), don't try to fetch.
-      // AuthGuard should have redirected.
+    } else if (isInitialAuthChecked && (!token || !user)) {
+      // If auth check is done but user is not properly authenticated (no token/user),
+      // don't attempt to fetch. AuthGuard should have redirected.
       setIsLoadingUrls(false); 
     }
-  }, [token, isAuthContextLoading]); // Depend on token and initial auth loading status
+    // If !isInitialAuthChecked, we wait for Redux to finish its initial state hydration.
+  }, [token, user, isInitialAuthChecked]); // Depend on these Redux state pieces
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -80,7 +87,7 @@ export default function MyUrlsPage() {
   const renderSkeletons = () => (
     <Paper elevation={2} sx={{ mt: 2 }}>
       <List dense>
-        {[...Array(3)].map((_, index) => ( // Render 3 skeleton items
+        {[...Array(3)].map((_, index) => (
           <React.Fragment key={`skeleton-${index}`}>
             <ListItem sx={{ py: 1.5 }}>
               <ListItemText
@@ -104,6 +111,9 @@ export default function MyUrlsPage() {
     </Paper>
   );
 
+  // The AuthGuard component will handle showing a loader if `isInitialAuthChecked` is false,
+  // or redirecting if not authenticated after the check.
+  // So, if we reach this return, AuthGuard has determined the user is allowed to see this page's content.
   return (
     <AuthGuard> 
       <Container maxWidth="lg">
@@ -111,12 +121,12 @@ export default function MyUrlsPage() {
           <Typography variant="h4" component="h1" gutterBottom>
             My Shortened URLs
           </Typography>
-          {/* Display welcome message once user context is loaded and user exists */}
-          {!isAuthContextLoading && user && (
+          
+          {/* Welcome message - user should be defined if AuthGuard passed */}
+          {user && (
             <Typography sx={{mt: 1, mb: 3}}>Welcome, {user.username || user.email}!</Typography>
           )}
           
-          {/* Display Skeleton or Actual Content based on isLoadingUrls */}
           {isLoadingUrls ? (
             renderSkeletons()
           ) : errorFetchingUrls ? (
@@ -133,7 +143,6 @@ export default function MyUrlsPage() {
                     <ListItem
                       sx={{ 
                         py: 1.5,
-                        // '&:hover': { backgroundColor: (theme) => theme.palette.action.hover }, // Optional hover
                       }}
                     >
                       <ListItemText

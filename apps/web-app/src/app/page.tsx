@@ -5,13 +5,15 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, List, ListItem, ListItemText, IconButton, Link as MuiLink, Tooltip,
-  Divider,ListItemSecondaryAction
+  Divider, ListItemSecondaryAction // Ensure ListItemSecondaryAction is imported
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useAuth } from '@/context/AuthContext'; // Using path alias
-import apiClient from '@/lib/apiClient'; // Using path alias
-import { useSnackbar } from '@/context/SnackbarContext';
+
+// Redux Hooks and State
+import { useAppSelector } from '../app/store/hooks'; // Path to your typed Redux hooks
+import apiClient from '../lib/apiClient';      // Path to your axios instance
+import { useSnackbar } from '../context/SnackbarContext'; // Path to your Snackbar context
 
 interface CreatedUrlResponse {
   id: string;
@@ -34,13 +36,15 @@ const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
 export default function HomePage() {
   const [longUrl, setLongUrl] = useState('');
   const [createdUrl, setCreatedUrl] = useState<CreatedUrlResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isFormLoading, setIsFormLoading] = useState(false); // Local loading state for this form
+  const [formError, setFormError] = useState<string | null>(null);   // Local error state for this form
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
   const { showSnackbar } = useSnackbar();
 
-  const { user: authenticatedUser, isLoading: isAuthLoading } = useAuth(); 
+  // Get auth state from Redux store
+  const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
+  // Load anonymous links from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -53,18 +57,20 @@ export default function HomePage() {
         localStorage.removeItem(ANONYMOUS_LINKS_STORAGE_KEY);
       }
     }
-  }, []);
+  }, []); // Empty dependency array, runs once on mount
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    setIsFormLoading(true);
+    setFormError(null);
     setCreatedUrl(null);
 
     try {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
       setCreatedUrl(response.data);
+      showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 });
 
+      // If user is NOT authenticated (check Redux state) and URL was created successfully
       if (!authenticatedUser && response.data) {
         const newLink: AnonymousLink = {
           shortId: response.data.shortId,
@@ -81,26 +87,36 @@ export default function HomePage() {
           return updatedLinks;
         });
       }
-      setLongUrl(''); 
+      setLongUrl(''); // Clear input field on success
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
-      setError(errorMessage);
+      setFormError(errorMessage); 
       console.error("Error creating short URL:", err);
     } finally {
-      setIsLoading(false);
+      setIsFormLoading(false);
     }
   };
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() =>showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
+      .then(() => showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
         showSnackbar({ message: 'Failed to copy URL.', severity: 'error' });
       });
   };
   
+  // If initial auth check from Redux is still happening, show a general loader for the page content
+  // This prevents flashing the anonymous links section if the user turns out to be authenticated.
+  if (!isInitialAuthChecked) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' /* Adjust height */ }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="md">
       <Box sx={{ my: 4, textAlign: 'center' }}>
@@ -123,9 +139,13 @@ export default function HomePage() {
             name="longUrl"
             autoFocus
             value={longUrl}
-            onChange={(e) => setLongUrl(e.target.value)}
-            disabled={isLoading}
+            onChange={(e) => {
+              setLongUrl(e.target.value);
+              if (formError) setFormError(null); // Clear error when user types
+            }}
+            disabled={isFormLoading}
             placeholder="https://..."
+            error={!!formError} // Highlight field if there's a form error
           />
           <Button
             type="submit"
@@ -133,26 +153,26 @@ export default function HomePage() {
             variant="contained"
             size="large"
             sx={{ mt: 2, mb: 2, py: 1.5 }}
-            disabled={isLoading}
+            disabled={isFormLoading}
           >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Shorten URL'}
+            {isFormLoading ? <CircularProgress size={24} color="inherit" /> : 'Shorten URL'}
           </Button>
         </Box>
       </Paper>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+      {formError && (
+        <Alert severity="error" sx={{ mb: 3 }}>{formError}</Alert>
       )}
 
       {createdUrl && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4, backgroundColor: 'success.light', color: 'success.contrastText' }}>
-          <Typography variant="h6" gutterBottom>Your Shortened URL:</Typography>
+        <Paper elevation={3} sx={{ p: 3, mb: 4, backgroundColor: 'success.light' }}>
+          <Typography variant="h6" gutterBottom sx={{ color: 'success.dark' }}>Your Shortened URL:</Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <MuiLink href={createdUrl.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'bold', color: 'success.contrastText', wordBreak: 'break-all' }}>
+            <MuiLink href={createdUrl.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'bold', color: 'success.dark', wordBreak: 'break-all' }}>
               {createdUrl.fullShortUrl}
             </MuiLink>
             <Tooltip title="Copy Short URL">
-              <IconButton onClick={() => handleCopyToClipboard(createdUrl.fullShortUrl)} size="small" sx={{ color: 'success.contrastText' }}>
+              <IconButton onClick={() => handleCopyToClipboard(createdUrl.fullShortUrl)} size="small" sx={{ color: 'success.dark' }}>
                 <ContentCopyIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -162,19 +182,20 @@ export default function HomePage() {
                 href={createdUrl.fullShortUrl} 
                 target="_blank" rel="noopener noreferrer" 
                 size="small" 
-                sx={{ color: 'success.contrastText' }}
+                sx={{ color: 'success.dark' }}
               >
                 <OpenInNewIcon fontSize="small"/>
               </IconButton>
             </Tooltip>
           </Box>
-          <Typography variant="caption" display="block" sx={{ mt: 1, wordBreak: 'break-all' }}>
+          <Typography variant="caption" display="block" sx={{ mt: 1, wordBreak: 'break-all', color: 'success.dark' }}>
             Original: {createdUrl.longUrl}
           </Typography>
         </Paper>
       )}
 
-      {!isAuthLoading && !authenticatedUser && anonymousLinks.length > 0 && (
+      {/* Only show anonymous links if initial auth check is done AND user is NOT authenticated */}
+      {isInitialAuthChecked && !authenticatedUser && anonymousLinks.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" component="h2" gutterBottom sx={{mt: 4}}>
             My Recent Anonymous Links
@@ -184,9 +205,7 @@ export default function HomePage() {
               {anonymousLinks.map((link, index) => (
                 <React.Fragment key={link.shortId}>
                   <ListItem 
-                    sx={{ 
-                      py: 1.5, 
-                    }}
+                    sx={{ py: 1.5 }}
                   >
                     <ListItemText
                       primary={

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Adjust path if needed
+import { useAppSelector } from '../app/store/hooks'; // Use typed Redux hook (ensure path is correct)
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 interface AuthGuardProps {
@@ -10,55 +10,57 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isLoading: isAuthLoading, token } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    // console.log('AuthGuard: isLoading:', isAuthLoading, 'user:', !!user, 'token:', !!token, 'pathname:', pathname);
+  // Select auth state from Redux store
+  const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
-    // If initial auth check is done, and there's no user/token,
-    // and we are not already on the login page (to prevent redirect loop)
-    if (!isAuthLoading && !user && !token) {
-      if (pathname !== '/login') {
-        // console.log('AuthGuard: Not authenticated, redirecting to /login from', pathname);
-        // Store the intended path to redirect back after login (optional)
-        // localStorage.setItem('redirectAfterLogin', pathname);
+  useEffect(() => {
+    // console.log(`AuthGuard Effect: Path: ${pathname}, InitialChecked: ${isInitialAuthChecked}, User: ${!!user}`);
+
+    // Only act once the initial auth check from localStorage (handled by authSlice) is complete.
+    if (!isInitialAuthChecked) {
+      return; // Still loading initial auth state, do nothing yet.
+    }
+
+    // If initial check is done, and we're not authenticated
+    if (!user) { // Checking for user object is sufficient if token is set along with user
+      // And we are not on a public auth page already
+      if (pathname !== '/login' && pathname !== '/register') {
+        // console.log(`AuthGuard: Not authenticated after initial check, redirecting to /login from ${pathname}`);
         router.replace('/login'); 
       }
     }
-  }, [user, isAuthLoading, token, router, pathname]);
+  }, [user, token, isInitialAuthChecked, router, pathname]); // Added token for completeness, though user check is primary
 
-  // While initial auth state is loading, show a loader
-  if (isAuthLoading) {
+  // Scenario 1: Initial auth state is still being determined by Redux store
+  if (!isInitialAuthChecked) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' /* Adjust height if AppBar is present */ }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
         <CircularProgress />
         <Typography sx={{ml: 2}}>Verifying authentication...</Typography>
       </Box>
     );
   }
 
-  // If authenticated, render the children (the protected page)
-  if (user && token) {
+  // Scenario 2: Initial check done, user is authenticated (user object exists)
+  if (user) {
     return <>{children}</>;
   }
   
-  // If not loading and not authenticated, and we're trying to render a protected route that's not login,
-  // this will show a brief loader while the useEffect above triggers the redirect.
-  // This prevents rendering children if user is null after loading.
-  // Or, if we are on /login already, this guard shouldn't be used there, or it should allow /login.
-  // The useEffect handles the redirect, so this return path is mainly for the loading phase.
-  // If somehow useEffect redirect fails, this acts as a fallback.
-  if (pathname !== '/login') { // Avoid rendering anything if about to redirect from a protected page
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
-            <CircularProgress />
-            <Typography sx={{ml: 2}}>Redirecting to login...</Typography>
-        </Box>
-      );
+  // Scenario 3: Initial check done, user is NOT authenticated
+  // If on a protected route (not login/register), useEffect above handles redirect. Show loader.
+  if (pathname !== '/login' && pathname !== '/register') {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)' }}>
+        <CircularProgress />
+        <Typography sx={{ml: 2}}>Redirecting to login...</Typography>
+      </Box>
+    );
   }
-
-  return null; // Or some fallback if on /login page and this guard was mistakenly used.
-               // Ideally, AuthGuard is not used on public pages like /login.
+  
+  // If on login/register and not authenticated, AuthGuard should effectively do nothing here,
+  // allowing the login/register pages to render.
+  return null; 
 }

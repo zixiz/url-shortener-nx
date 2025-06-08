@@ -2,7 +2,6 @@
 import React, { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { ThemeProvider, CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
 import { createAppTheme } from '../../theme/theme'; 
-import { AuthProvider } from '../../context/AuthContext';
 import { SnackbarProvider } from '@/context/SnackbarContext';
 import { Provider as ReduxProvider } from 'react-redux'; 
 import { store } from '../store/store'; 
@@ -89,14 +88,12 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
   return (
     <ReduxProvider store={store}>
       <ThemeModeContext.Provider value={themeModeAPI}>
-        <AuthProvider>
           <SnackbarProvider>
             <ThemeProvider theme={theme}>
               <CssBaseline />
               {children}
             </ThemeProvider>
           </SnackbarProvider>
-        </AuthProvider>
       </ThemeModeContext.Provider>
     </ReduxProvider>
   );
