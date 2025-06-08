@@ -7,26 +7,23 @@ import { connectRedis } from './config/redis.js';
 import { startRabbitMQ  } from './rabbitmq-consumer.js';
 import redirectRoutes from './routes/redirect.routes.js';
 
-// Redirect route will be imported here
 
 async function bootstrap() {
   const app = express();
-  // No express.json() needed if it only handles GET /{shortId}
 
   try {
     connectRedis();
     logger.info('Redirect Service: Redis client initialized.');
   } catch (error) {
     logger.error('Redirect Service: Error initializing Redis client', error);
-    process.exit(1); // Redis is critical for this service
+    process.exit(1); 
   }
 
   try {
-    await startRabbitMQ (); // Connects to RabbitMQ and starts listening
+    await startRabbitMQ (); 
     logger.info('Redirect Service: RabbitMQ consumer started.');
   } catch (error) {
     logger.error('Redirect Service: Error starting RabbitMQ consumer', error);
-    // Decide if this is critical enough to exit
   }
 
   app.use('/', redirectRoutes);

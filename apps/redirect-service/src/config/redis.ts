@@ -12,7 +12,6 @@ export function connectRedis(): IORedisNamespace.Redis {
     logger.info(`Redirect Service: Attempting to connect to Redis at ${REDIS_URL}`);
     const client = new IORedisNamespace.Redis(REDIS_URL, {
       maxRetriesPerRequest: 3,
-      // lazyConnect: false, // Consider if you want immediate connection attempt
     });
 
     client.on('connect', () => {
@@ -21,7 +20,6 @@ export function connectRedis(): IORedisNamespace.Redis {
     client.on('error', (err) => {
       logger.error('Redirect Service: Redis client connection error:', err);
     });
-    // Add 'reconnecting', 'end' listeners if desired
 
     redisClient = client;
     return redisClient;

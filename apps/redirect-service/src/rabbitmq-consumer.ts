@@ -10,7 +10,6 @@ let connection: Connection | null = null;
 let consumerChannel: Channel | null = null;
 let publisherChannel: ConfirmChannel | null = null; 
 
-// To prevent multiple concurrent connection attempts
 let connectionPromise: Promise<void> | null = null;
 
 async function processMessage(msg: ConsumeMessage | null) {
@@ -39,7 +38,7 @@ async function processMessage(msg: ConsumeMessage | null) {
     await redisClient.set(`url:${shortId}`, longUrl); 
     logger.info(`Redirect Service Consumer: Cached mapping in Redis: ${shortId} -> ${longUrl.substring(0, 50)}...`);
     
-    consumerChannel.ack(msg); // Acknowledge message processing
+    consumerChannel.ack(msg); 
   } catch (error) {
     logger.error('Redirect Service Consumer: Error processing RabbitMQ message.', {
       content: msg.content.toString(),
@@ -47,7 +46,7 @@ async function processMessage(msg: ConsumeMessage | null) {
       stack: error instanceof Error ? error.stack : undefined
     });
     if (consumerChannel) {
-      consumerChannel.nack(msg, false, false); // Example: Don't requeue on error
+      consumerChannel.nack(msg, false, false); 
     } else {
       logger.error('Redirect Service Consumer: Consumer channel is null, cannot NACK message during error handling.');
     }
@@ -56,7 +55,7 @@ async function processMessage(msg: ConsumeMessage | null) {
 
 export async function startRabbitMQ(): Promise<void> {
   if (connectionPromise) {
-    return connectionPromise; // Await existing connection attempt
+    return connectionPromise;
   }
 
   connectionPromise = (async () => {
@@ -71,19 +70,15 @@ export async function startRabbitMQ(): Promise<void> {
           connection.on('error', (err) => {
             logger.error('Redirect Service: RabbitMQ connection error event:', err);
             connection = null; consumerChannel = null; publisherChannel = null;
-            connectionPromise = null; // Allow new attempts
-            // TODO: Implement robust reconnection strategy e.g. exponential backoff
-            // setTimeout(startRabbitMQ, 5000); 
+            connectionPromise = null;
           });
           connection.on('close', () => {
             logger.warn('Redirect Service: RabbitMQ connection closed event.');
             connection = null; consumerChannel = null; publisherChannel = null;
-            connectionPromise = null; // Allow new attempts
-            // TODO: Implement robust reconnection strategy
+            connectionPromise = null; 
           });
       }
 
-      // Setup Consumer Channel
       if (!consumerChannel && connection) {
         consumerChannel = await connection.createChannel();
         logger.info('Redirect Service: RabbitMQ consumer channel created.');
@@ -93,11 +88,9 @@ export async function startRabbitMQ(): Promise<void> {
         consumerChannel.consume(CONSUME_QUEUE_NAME, processMessage, { noAck: false });
       }
 
-      // Setup Publisher Channel
       if (!publisherChannel && connection) {
         publisherChannel = await connection.createConfirmChannel();
         logger.info('Redirect Service: RabbitMQ publisher channel created.');
-        // Publisher channel might need error/return listeners too for robust publishing
         publisherChannel.on('error', (err) => {
             logger.error('Redirect Service: RabbitMQ publisher channel error:', err);
             publisherChannel = null;
@@ -110,8 +103,7 @@ export async function startRabbitMQ(): Promise<void> {
 
     } catch (error) {
       logger.error('Redirect Service: Failed to start RabbitMQ components:', error);
-      connectionPromise = null; // Reset promise on error to allow retry
-      // Clean up partially initialized resources
+      connectionPromise = null;
       if (connection && !consumerChannel) await connection.close().catch(e => logger.error("Error closing connection", e));
       connection = null; 
       consumerChannel = null; 
@@ -123,7 +115,6 @@ export async function startRabbitMQ(): Promise<void> {
   try {
     await connectionPromise;
   } catch (error) {
-    // Error already logged, re-throw if bootstrap needs to fail
     throw error;
   }
 }
