@@ -1,9 +1,12 @@
 'use client';
 import React, { useState, useMemo, createContext, useContext, useEffect } from 'react';
 import { ThemeProvider, CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
-import { createAppTheme } from '../../theme/theme'; // Corrected path from previous step
+import { createAppTheme } from '../../theme/theme'; 
 import { AuthProvider } from '../../context/AuthContext';
 import { SnackbarProvider } from '@/context/SnackbarContext';
+import { Provider as ReduxProvider } from 'react-redux'; 
+import { store } from '../store/store'; 
+import { initialAuthCheckCompleted } from '../store/authSlice'; 
 
 interface ThemeContextType {
   mode: PaletteMode;
@@ -79,16 +82,22 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
 
   const theme = useMemo(() => createAppTheme(themeModeAPI.mode), [themeModeAPI.mode]);
 
+  useEffect(() => {
+    store.dispatch(initialAuthCheckCompleted());
+  }, []);
+
   return (
-    <ThemeModeContext.Provider value={themeModeAPI}>
-      <AuthProvider>
-        <SnackbarProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-          </ThemeProvider>
-        </SnackbarProvider>
-      </AuthProvider>
-    </ThemeModeContext.Provider>
+    <ReduxProvider store={store}>
+      <ThemeModeContext.Provider value={themeModeAPI}>
+        <AuthProvider>
+          <SnackbarProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              {children}
+            </ThemeProvider>
+          </SnackbarProvider>
+        </AuthProvider>
+      </ThemeModeContext.Provider>
+    </ReduxProvider>
   );
 }
