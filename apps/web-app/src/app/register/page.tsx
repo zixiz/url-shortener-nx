@@ -4,7 +4,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { registerUser, clearAuthError } from '../store/authSlice';
-import { useSnackbar } from '@/context/SnackbarContext'; // For success message
+import { useSnackbar } from '@/context/SnackbarContext';
 import {
   Container, Box, TextField, Button, Typography,
   CircularProgress, Alert, Paper
@@ -16,8 +16,8 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [clientFormError, setClientFormError] = useState<string | null>(null); // For client validation
-  const [apiPageError, setApiPageError] = useState<string | null>(null); // For API errors
+  const [clientFormError, setClientFormError] = useState<string | null>(null);
+  const [apiPageError, setApiPageError] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -25,15 +25,12 @@ export default function RegisterPage() {
 
   const { user, isLoading: isAuthApiLoading, error: authApiErrorFromSlice, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
-  // Clear Redux auth error when component mounts
   useEffect(() => {
     if (authApiErrorFromSlice) {
       dispatch(clearAuthError());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (isInitialAuthChecked && user) {
       router.replace('/my-urls');
@@ -65,7 +62,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Loading states
   if (!isInitialAuthChecked) {
     return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box> );
   }
@@ -78,7 +74,6 @@ export default function RegisterPage() {
         <Typography component="h1" variant="h5">Sign Up</Typography>
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
           {/* TextFields for email, username, password, confirmPassword */}
-          {/* Ensure disabled={isAuthApiLoading} */}
           <TextField margin="normal" required fullWidth id="email" label="Email Address" value={email} onChange={(e) => { setEmail(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
           <TextField margin="normal" fullWidth id="username" value={username} label="Username" onChange={(e) => { setUsername(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
           <TextField margin="normal" required fullWidth type="password" name="password" label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setClientFormError(null); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
@@ -98,10 +93,10 @@ export default function RegisterPage() {
             <Link 
               href="/login" 
               passHref
-              onClick={() => { // Clear this page's errors when navigating away
+              onClick={() => { 
                 setClientFormError(null);
                 setApiPageError(null);
-                dispatch(clearAuthError()); // Also clear global Redux error
+                dispatch(clearAuthError());
               }}
             >
               <Typography component="span" variant="body2" sx={{ cursor: 'pointer' }}>

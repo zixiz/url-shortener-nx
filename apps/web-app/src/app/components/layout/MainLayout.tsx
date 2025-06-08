@@ -21,11 +21,10 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import ThemeToggleButton from '../ThemeToggleButton'; // Assuming this path is correct
-// Redux Hooks and Actions
-import { useAppSelector, useAppDispatch } from '../../store/hooks'; // Corrected path to store
-import { logout as logoutAction, initialAuthCheckCompleted } from '../../store/authSlice'; // Corrected path to store
-import MenuIcon from '@mui/icons-material/Menu'; // Hamburger icon
+import ThemeToggleButton from '../ThemeToggleButton'; 
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { logout as logoutAction, initialAuthCheckCompleted } from '../../store/authSlice';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const NAV_ITEMS_PUBLIC = [
   { text: 'Home', href: '/' },
@@ -45,7 +44,7 @@ const DRAWER_WIDTH = 240;
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const muiTheme = useTheme(); // Renamed to avoid conflict with your 'theme' folder/file
+  const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
   const { user, isInitialAuthChecked } = useAppSelector((state) => state.auth);
@@ -55,12 +54,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   // This useEffect in ThemeRegistry is primary for dispatching initialAuthCheckCompleted.
   // This can be a safeguard or removed if ThemeRegistry handles it reliably.
-  useEffect(() => {
-      if(!isInitialAuthChecked && typeof window !== 'undefined') { // Check window for client-side only
-          // console.log("MainLayout: isInitialAuthChecked is false, dispatching initialAuthCheckCompleted");
-          // dispatch(initialAuthCheckCompleted()); // Dispatching from ThemeRegistry is likely sufficient and better
-      }
-    }, [dispatch, isInitialAuthChecked]);
+  // useEffect(() => {
+  //     if(!isInitialAuthChecked && typeof window !== 'undefined') { // Check window for client-side only
+  //         // console.log("MainLayout: isInitialAuthChecked is false, dispatching initialAuthCheckCompleted");
+  //         // dispatch(initialAuthCheckCompleted()); // Dispatching from ThemeRegistry is likely sufficient and better
+  //     }
+  //   }, [dispatch, isInitialAuthChecked]);
 
 
   const handleLogout = () => {

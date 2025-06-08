@@ -1,4 +1,3 @@
-// apps/web-app/src/app/stats/page.tsx
 'use client';
 
 import React, { useState, FormEvent } from 'react';
@@ -6,11 +5,11 @@ import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, Card, CardContent, Grid
 } from '@mui/material';
-import apiClient from '@/lib/apiClient'; // Assuming path alias
+import apiClient from '@/lib/apiClient'; 
 
 interface UrlStats {
   shortId: string;
-  longUrl?: string; // Make longUrl optional as API might not always return it if only clicks are fetched
+  longUrl?: string;
   clickCount: number;
 }
 

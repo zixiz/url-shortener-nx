@@ -1,10 +1,9 @@
-// apps/web-app/src/app/login/page.tsx
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppSelector, useAppDispatch } from '../store/hooks'; // Path to your typed hooks
-import { loginUser, clearAuthError } from '../store/authSlice'; // Import thunk and clearAuthError action
+import { useAppSelector, useAppDispatch } from '../store/hooks'; 
+import { loginUser, clearAuthError } from '../store/authSlice';
 import {
   Container, Box, TextField, Button, Typography,
   CircularProgress, Alert, Paper
@@ -14,24 +13,20 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [pageError, setPageError] = useState<string | null>(null); // Local error for this form
+  const [pageError, setPageError] = useState<string | null>(null); 
 
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  // Get relevant state from Redux store
   const { user, isLoading: isAuthApiLoading, error: authApiError, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
-  // Clear Redux auth error when component mounts if it's from a different source/page
+  
   useEffect(() => {
-    // console.log("LoginPage Mounted. Current Redux authApiError:", authApiError);
-    if (authApiError) { // If there's a global auth error when loading this page
-      dispatch(clearAuthError()); // Clear it from Redux state
+    if (authApiError) { 
+      dispatch(clearAuthError());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]); // Run once on mount
+  }, [dispatch]);
 
-  // Redirect if user is already logged in (after initial Redux state is checked)
   useEffect(() => {
     if (isInitialAuthChecked && user) {
       router.replace('/my-urls'); 
@@ -40,7 +35,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setPageError(null); // Clear local page error
+    setPageError(null);
 
     const resultAction = await dispatch(loginUser({ emailP: email, passwordP: password }));
 
@@ -52,15 +47,13 @@ export default function LoginPage() {
     }
   };
   
-  // Loading states
-  if (!isInitialAuthChecked) { // Waiting for Redux to confirm initial auth status
+  if (!isInitialAuthChecked) {
     return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box> );
   }
-  if (isInitialAuthChecked && user) { // User is logged in, redirecting
+  if (isInitialAuthChecked && user) {
     return ( <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /><Typography sx={{ml: 2}}>Redirecting...</Typography></Box> );
   }
 
-  // If initial check done and no user, render the form
   return (
     <Container component="main" maxWidth="xs">
       <Paper elevation={3} sx={{ marginTop: 8, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

@@ -26,9 +26,8 @@ const THEME_MODE_STORAGE_KEY = 'themeMode';
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [mode, setMode] = useState<PaletteMode>('light'); // Initial default
+  const [mode, setMode] = useState<PaletteMode>('light'); 
 
-  // Effect to load saved mode from localStorage or use system preference
   useEffect(() => {
     let savedMode: PaletteMode | null = null;
     try {

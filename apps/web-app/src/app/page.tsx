@@ -1,19 +1,17 @@
-// apps/web-app/src/app/page.tsx
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, List, ListItem, ListItemText, IconButton, Link as MuiLink, Tooltip,
-  Divider, ListItemSecondaryAction // Ensure ListItemSecondaryAction is imported
+  Divider, ListItemSecondaryAction 
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-// Redux Hooks and State
-import { useAppSelector } from '../app/store/hooks'; // Path to your typed Redux hooks
-import apiClient from '../lib/apiClient';      // Path to your axios instance
-import { useSnackbar } from '../context/SnackbarContext'; // Path to your Snackbar context
+import { useAppSelector } from '../app/store/hooks'; 
+import apiClient from '../lib/apiClient';
+import { useSnackbar } from '../context/SnackbarContext';
 
 interface CreatedUrlResponse {
   id: string;
@@ -36,15 +34,13 @@ const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
 export default function HomePage() {
   const [longUrl, setLongUrl] = useState('');
   const [createdUrl, setCreatedUrl] = useState<CreatedUrlResponse | null>(null);
-  const [isFormLoading, setIsFormLoading] = useState(false); // Local loading state for this form
-  const [formError, setFormError] = useState<string | null>(null);   // Local error state for this form
+  const [isFormLoading, setIsFormLoading] = useState(false); 
+  const [formError, setFormError] = useState<string | null>(null);
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
   const { showSnackbar } = useSnackbar();
 
-  // Get auth state from Redux store
   const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
-  // Load anonymous links from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -70,7 +66,6 @@ export default function HomePage() {
       setCreatedUrl(response.data);
       showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 });
 
-      // If user is NOT authenticated (check Redux state) and URL was created successfully
       if (!authenticatedUser && response.data) {
         const newLink: AnonymousLink = {
           shortId: response.data.shortId,
@@ -87,7 +82,7 @@ export default function HomePage() {
           return updatedLinks;
         });
       }
-      setLongUrl(''); // Clear input field on success
+      setLongUrl('');
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
@@ -107,8 +102,7 @@ export default function HomePage() {
       });
   };
   
-  // If initial auth check from Redux is still happening, show a general loader for the page content
-  // This prevents flashing the anonymous links section if the user turns out to be authenticated.
+
   if (!isInitialAuthChecked) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' /* Adjust height */ }}>
@@ -141,11 +135,11 @@ export default function HomePage() {
             value={longUrl}
             onChange={(e) => {
               setLongUrl(e.target.value);
-              if (formError) setFormError(null); // Clear error when user types
+              if (formError) setFormError(null); 
             }}
             disabled={isFormLoading}
             placeholder="https://..."
-            error={!!formError} // Highlight field if there's a form error
+            error={!!formError}
           />
           <Button
             type="submit"

@@ -1,6 +1,6 @@
 import React from 'react';
 import ThemeRegistry from './components/ThemeRegistry';
-import MainLayout from './components/layout/MainLayout'; // Import MainLayout
+import MainLayout from './components/layout/MainLayout';
 import './global.css';
 
 export const metadata = {

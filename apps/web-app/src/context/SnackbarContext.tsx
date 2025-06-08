@@ -1,4 +1,3 @@
-// apps/web-app/src/context/SnackbarContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
@@ -29,7 +28,7 @@ export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
   const [snackbarConfig, setSnackbarConfig] = useState<SnackbarMessage>({
     message: '',
     severity: 'info',
-    duration: 6000, // Default duration
+    duration: 6000, 
   });
 
   const showSnackbar = useCallback((options: SnackbarMessage) => {
@@ -55,7 +54,7 @@ export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
         open={open}
         autoHideDuration={snackbarConfig.duration}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} // Position
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} 
       >
         <Alert onClose={handleClose} severity={snackbarConfig.severity} sx={{ width: '100%' }} variant="filled">
           {snackbarConfig.message}

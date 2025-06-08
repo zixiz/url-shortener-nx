@@ -1,8 +1,7 @@
 {
-  "extends": "../../tsconfig.base.json", // Assuming this points to your workspace root tsconfig.base.json
+  "extends": "../../tsconfig.base.json", 
   "compilerOptions": {
-    // Options that Next.js typically sets or requires:
-    "target": "es5", // Next.js often targets es5 for browser compatibility then uses modern syntax via SWC
+    "target": "es5", 
     "lib": [
       "dom",
       "dom.iterable",
@@ -10,24 +9,22 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false, // Next.js often defaults this to false initially
+    "strict": false, 
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true, // Important: Next.js handles emission; tsc here is for type checking
+    "noEmit": true, 
     "esModuleInterop": true,
-    "module": "esnext", // For type checking modern module syntax
-    "moduleResolution": "bundler", // Or "node", "NodeNext". "bundler" is good for modern setups.
+    "module": "esnext", 
+    "moduleResolution": "bundler", 
     "resolveJsonModule": true,
-    "isolatedModules": true, // Next.js requirement
-    "jsx": "preserve", // Next.js requirement
+    "isolatedModules": true, 
+    "jsx": "preserve", 
     "incremental": true,
-    "baseUrl": ".", // The current directory (apps/web-app)
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "src/*"
-      ] // Assuming your code is in apps/web-app/src
+      ] 
     }
-    // DO NOT explicitly set rootDir here if it conflicts with Next.js's generated types.
-    // Let TypeScript infer it from includes, or ensure includes are compatible.
     ,
     "plugins": [
       {
@@ -37,18 +34,13 @@
   },
   "include": [
     "next-env.d.ts",
-    "src/**/*.ts", // Include your actual source files
+    "src/**/*.ts", 
     "src/**/*.tsx",
     "../../dist/apps/web-app/.next/types/**/*.ts"
-    // "custom.d.ts" // If you have one
-    // DO NOT include paths into ".next" or "dist" here if they conflict with rootDir.
-    // Next.js's internal build will handle its generated types.
-    // If Next.js auto-adds something like ".next/types/**/*.ts" and it causes rootDir issues,
-    // that's a known tricky point.
   ],
   "exclude": [
     "node_modules",
-    ".next", // Exclude build output from this tsconfig
-    "dist" // Exclude Nx build output
+    ".next", 
+    "dist" 
   ]
 }
