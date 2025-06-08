@@ -1,12 +1,11 @@
-// apps/management-service/tsconfig.json
 {
-  "extends": "../../tsconfig.base.json", // Points to the root one
+  "extends": "../../tsconfig.base.json", 
   "files": [],
   "include": [],
   "references": [
     {
-      "path": "./tsconfig.app.json" // Points to the .app.json in the same directory
+      "path": "./tsconfig.app.json" 
     }
-    // Add tsconfig.spec.json reference if you have one
+
   ]
 }

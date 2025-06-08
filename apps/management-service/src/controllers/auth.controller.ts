@@ -13,7 +13,7 @@ export class AuthController {
       const { error, value } = registerSchema.validate(req.body);
       if (error) {
         logger.warn('Registration validation failed', { error: error.details[0].message, body: req.body });
-        res.status(400).json({ message: error.details[0].message }); // Send response
+        res.status(400).json({ message: error.details[0].message }); 
         return;
       }
 
@@ -23,7 +23,7 @@ export class AuthController {
       const existingUser = await this.userRepository.findOneBy({ email });
       if (existingUser) {
         logger.warn('Registration attempt with existing email', { email });
-        res.status(409).json({ message: 'Email already exists.' }); // Send response
+        res.status(409).json({ message: 'Email already exists.' }); 
         return;
       }
 
@@ -40,7 +40,7 @@ export class AuthController {
       const userResponse = { ...user };
       delete (userResponse as any).password;
 
-      res.status(201).json({ message: 'User registered successfully.', user: userResponse }); // Send response
+      res.status(201).json({ message: 'User registered successfully.', user: userResponse }); 
     } catch (err) {
       logger.error('Error during registration (to be caught by asyncHandler)', { error: err });
       next(err); // Pass error to asyncHandler/Express error handling
@@ -77,7 +77,6 @@ export class AuthController {
 
       if (!jwtSecret) {
         logger.error('JWT_SECRET is not defined in environment variables.');
-        // This is a server configuration error. Pass to error handler.
         return next(new Error('JWT_SECRET is not defined. Server configuration error.'));
       }
 
@@ -105,7 +104,7 @@ export class AuthController {
       res.status(200).json({ message: 'Login successful.', token, userId: user.id, email: user.email, username: user.username });
     } catch (err) {
       logger.error('Error during login (to be caught by asyncHandler)', { error: err });
-      next(err); // Pass error to asyncHandler/Express error handling
+      next(err);
     }
   };
 }

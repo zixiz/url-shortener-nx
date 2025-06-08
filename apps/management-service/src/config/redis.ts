@@ -1,8 +1,6 @@
-// apps/management-service/src/config/redis.ts
-import * as IORedisNamespace from 'ioredis'; // Import everything as a namespace
+import * as IORedisNamespace from 'ioredis'; 
 import { logger } from './logger.js';
 
-// Access the Redis class constructor via the namespace
 let redisClient: IORedisNamespace.Redis | null = null;
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -14,7 +12,6 @@ export function connectRedis(): IORedisNamespace.Redis {
 
   try {
     logger.info(`Attempting to connect to Redis at ${REDIS_URL}`);
-    // Construct using Namespace.ClassName
     const client = new IORedisNamespace.Redis(REDIS_URL, { 
       maxRetriesPerRequest: 3,
     });

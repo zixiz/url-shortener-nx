@@ -6,5 +6,4 @@ export const createUrlSchema = Joi.object({
     'string.empty': 'Original URL is required.',
     'any.required': 'Original URL is required.',
   }),
-  // customAlias: Joi.string().alphanum().min(3).max(30).optional(), // If implementing custom aliases
 });

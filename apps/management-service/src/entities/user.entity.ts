@@ -1,4 +1,3 @@
-// apps/management-service/src/entities/user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert } from 'typeorm';
 import bcrypt from 'bcryptjs';
 

@@ -5,7 +5,6 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { logger } from '../config/logger.js';
 import { nanoid } from 'nanoid';
 import { getRabbitMQChannel } from '../config/rabbitmq.js';
-import { getRedisClient } from '../config/redis.js'; // Ensure this is implemented correctly
 import { createUrlSchema } from '../validators/url.validator.js';
 
 const SHORT_ID_LENGTH = 11;
@@ -36,7 +35,6 @@ export class UrlController {
         attempts++;
         if (attempts > maxAttempts && existingUrl) {
             logger.error('Failed to generate unique shortId after several attempts', { longUrl, attempts });
-            // Consider a more specific error for the client or just a generic 500
             return next(new Error('Could not generate a unique short ID. Please try again.'));
         }
       } while (existingUrl);
@@ -62,7 +60,6 @@ export class UrlController {
             shortId: newUrl.shortId, 
             error: mqError instanceof Error ? mqError.message : String(mqError) 
         });
-        // Continue, as URL creation in DB was successful. Redirect service might miss this one for caching.
       }
 
       const appBaseUrl = process.env.APP_BASE_URL || `http://localhost:3003`; // 3003 is redirect-service port
@@ -100,7 +97,7 @@ export class UrlController {
         shortId: url.shortId,
         longUrl: url.longUrl,
         fullShortUrl: `${appBaseUrl}/${url.shortId}`,
-        clickCount: url.clickCount, // Displaying the (potentially stale) DB click count
+        clickCount: url.clickCount,
         createdAt: url.createdAt,
       }));
 
@@ -113,7 +110,7 @@ export class UrlController {
 
   getUrlStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { shortId } = req.params;
-    logger.info(`Stats request for ${shortId} (from DB)`); // Log source
+    logger.info(`Stats request for ${shortId} (from DB)`); 
     try {
       const urlDetails = await this.urlRepository.findOneBy({ shortId });
 
@@ -124,7 +121,7 @@ export class UrlController {
       res.status(200).json({
         shortId: urlDetails.shortId,
         longUrl: urlDetails.longUrl,
-        clickCount: urlDetails.clickCount, // From PostgreSQL
+        clickCount: urlDetails.clickCount,
       });
     } catch (err) {
       logger.error('Error getting URL stats', { shortId, error: err instanceof Error ? err.message : String(err) });

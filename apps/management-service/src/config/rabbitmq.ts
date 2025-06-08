@@ -45,7 +45,7 @@ export async function connectRabbitMQ(): Promise<void> {
   try {
     const conn = await connectionPromise; 
     
-    if (!conn) { // Basic null check, though establishConnection should throw if it can't connect
+    if (!conn) { 
         logger.error('RabbitMQ connection promise resolved to null/undefined.');
         connectionPromise = null;
         throw new Error('Failed to establish RabbitMQ connection (promise resolved null).');
@@ -54,7 +54,7 @@ export async function connectRabbitMQ(): Promise<void> {
     connectionInstance = conn;
 
     if (!channelInstance) {
-        const ch = await connectionInstance.createChannel(); // NO CAST
+        const ch = await connectionInstance.createChannel(); 
         logger.info('RabbitMQ channel created.');
         channelInstance = ch;
     }
@@ -93,7 +93,7 @@ export async function closeRabbitMQConnection(): Promise<void> {
   connectionPromise = null;
   if (conn) {
     try {
-      await conn.close(); // NO CAST
+      await conn.close(); 
       logger.info('RabbitMQ connection closed on demand.');
     } catch (error) {
       logger.error('Error closing RabbitMQ connection on demand', error);

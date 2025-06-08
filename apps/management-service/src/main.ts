@@ -13,8 +13,6 @@ import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import { startClickEventConsumer } from './rabbitmq-click-consumer.js'; 
 
-// Auth and URL routes will be imported here later
-
 async function bootstrap() {
   const app = express();
 
@@ -53,7 +51,7 @@ async function bootstrap() {
   }
 
   try {
-    connectRedis(); // connectRedis usually doesn't need await if it's just creating a client instance
+    connectRedis();
     logger.info('Management Service: Redis client initialized.');
   } catch (error) {
     logger.error('Management Service: Error initializing Redis client', error);

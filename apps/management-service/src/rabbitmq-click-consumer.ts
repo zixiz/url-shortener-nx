@@ -60,8 +60,6 @@ async function processClickMessage(msg: ConsumeMessage | null, channel: Channel)
 
 export async function startClickEventConsumer(): Promise<void> {
   try {
-    // Ensure the main RabbitMQ connection and publisher channel are up via existing utility
-    // This connectRabbitMQ might also establish the channel we can use or we get it.
     await connectRabbitMQ(); // Ensures connection is attempted/established by the shared utility
     const channel = getRabbitMQChannel(); // Get the shared channel
 
@@ -82,9 +80,7 @@ export async function startClickEventConsumer(): Promise<void> {
     logger.error('Management Click Consumer: Failed to start RabbitMQ click event consumer.', {
         errorMessage: error instanceof Error ? error.message : String(error)
     });
-    // Optional: Implement retry logic here if connectRabbitMQ fails,
-    // but the shared utility might have its own retries.
-    // For now, if it fails, the consumer won't start.
-    throw error; // Allow bootstrap to know it failed
+    
+    throw error; 
   }
 }

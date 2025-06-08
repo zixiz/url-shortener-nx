@@ -4,7 +4,6 @@ import { AppDataSource } from '../data-source.js';
 import { User } from '../entities/user.entity.js';
 import { logger } from '../config/logger.js';
 
-// Extend Express Request type to include 'user' property
 export interface AuthenticatedRequest extends Request {
   user?: User;
 }
@@ -94,9 +93,6 @@ export const optionalAuthenticateJWT = async (
             req.user = userPayload as User;
           }
         } catch (err) {
-          // Token is present but invalid (expired, bad signature).
-          // For optional auth, we don't send 401 here.
-          // We just don't set req.user.
           logger.debug('Optional JWT verification failed, proceeding as anonymous.', {
             error: err instanceof Error ? err.message : String(err),
           });
@@ -104,7 +100,5 @@ export const optionalAuthenticateJWT = async (
       }
     }
   }
-  // If no token or invalid token, req.user remains undefined.
-  // Always proceed for optional authentication.
   next();
 };
