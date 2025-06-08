@@ -14,6 +14,8 @@ interface UrlStats {
   clickCount: number;
 }
 
+const APP_BASE_URL = (process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3003').replace(/\/$/, "");
+
 export default function StatsPage() {
   const [inputShortId, setInputShortId] = useState('');
   const [urlStats, setUrlStats] = useState<UrlStats | null>(null);
@@ -22,9 +24,21 @@ export default function StatsPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!inputShortId.trim()) {
-      setError('Please enter a Short ID.');
+    let processedShortId = inputShortId.trim();
+
+    if (!processedShortId) {
+      setError('Please enter a Short URL or ID.');
       return;
+    }
+
+    // Check if the input is a full URL starting with our app's base URL
+    if (processedShortId.startsWith(APP_BASE_URL + '/')) {
+      processedShortId = processedShortId.substring((APP_BASE_URL + '/').length);
+    }
+    
+    if (!processedShortId) {
+        setError('Invalid Short URL format. Please enter just the ID part or the full short URL.');
+        return;
     }
     setIsLoading(true);
     setError(null);
@@ -32,7 +46,7 @@ export default function StatsPage() {
 
     try {
       // The API endpoint is /api/stats/:shortId
-      const response = await apiClient.get<UrlStats>(`/stats/${inputShortId.trim()}`);
+      const response = await apiClient.get<UrlStats>(`/stats/${processedShortId}`);
       setUrlStats(response.data);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch stats or Short ID not found.';

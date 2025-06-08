@@ -1,9 +1,8 @@
-// apps/management-service/src/rabbitmq-click-consumer.ts
 import type { Channel, ConsumeMessage } from 'amqplib';
 import { logger } from './config/logger.js';
 import { AppDataSource } from './data-source.js';
 import { Url } from './entities/url.entity.js';
-import { getRabbitMQChannel, connectRabbitMQ } from './config/rabbitmq.js'; // Use existing utility
+import { getRabbitMQChannel, connectRabbitMQ } from './config/rabbitmq.js'; 
 
 const CLICK_EVENTS_QUEUE = process.env.RABBITMQ_CLICK_EVENTS_QUEUE || 'url_clicked_events_queue'; 
 
