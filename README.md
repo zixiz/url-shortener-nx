@@ -1,109 +1,136 @@
-# UrlShortenerNx
+# URL Shortener NX
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A fullstack monorepo project for a scalable URL shortener, built with Nx. It features a modern web frontend, backend microservices, authentication, and integrations with Redis and RabbitMQ.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+---
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## Table of Contents
 
-## Generate a library
+- [Project Structure](#project-structure)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
+---
 
-## Run tasks
-
-To build the library use:
-
-```sh
-npx nx build pkg1
-```
-
-To run any task with Nx use:
-
-```sh
-npx nx <target> <project-name>
-```
-
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
+## Project Structure
 
 ```
-npx nx release
+apps/
+  management-service/   # Backend management API (Node.js, Express)
+  redirect-service/     # Redirect microservice (Node.js, Express)
+  web-app/              # Frontend (React, Next.js, Tailwind, Redux)
+  web-app-e2e/          # End-to-end tests (Playwright)
+libs/
+  shared/               # Shared code and types
 ```
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+- **management-service**: Handles user management, URL creation, stats, and authentication APIs.
+- **redirect-service**: Handles fast URL redirection and click tracking.
+- **web-app**: Modern frontend for users to register, login, manage URLs, and view stats.
 
-[Learn more about Nx release &raquo;](hhttps://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
 
-## Keep TypeScript project references up to date
+## Features
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+- URL shortening and redirection
+- User registration and authentication
+- Management dashboard for URLs and stats
+- Click tracking and analytics
+- Modern UI with dark/light mode
+- Scalable microservice architecture
+- Redis caching
+- RabbitMQ for event/message passing
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+---
 
-```sh
-npx nx sync
-```
+## Tech Stack
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+- **Monorepo:** Nx
+- **Frontend:** React, Next.js, Redux, MUI, Tailwind CSS
+- **Backend:** Node.js, Express
+- **Database:** (Add your DB, e.g., PostgreSQL, MongoDB)
+- **Cache:** Redis
+- **Messaging:** RabbitMQ
 
-```sh
-npx nx sync:check
-```
+---
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+## Getting Started
 
-## Set up CI!
+### Prerequisites
 
-### Step 1
+- Node.js (v18+ recommended)
+- npm or yarn
+- Redis
+- RabbitMQ
+- (Optional) Docker
 
-To connect to Nx Cloud, run the following command:
+### Installation
 
-```sh
-npx nx connect
-```
+1. Clone the repository:
+   ```powershell
+   git clone <your-repo-url>
+   cd url-shortener-nx
+   ```
+2. Install dependencies:
+   ```powershell
+   npm install
+   ```
+3. Copy and configure environment variables for each service (see `.env.example` or service docs).
+4. Start Redis and RabbitMQ (locally or via Docker):
+   ```powershell
+   docker-compose up -d
+   ```
+5. Run the development servers:
+   ```powershell
+   npx nx serve management-service
+   npx nx serve redirect-service
+   npx nx serve web-app
+   ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+---
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Usage
 
-### Step 2
+- Access the web app at [http://localhost:4200](http://localhost:4200) (or your configured port).
+- Register/login, create short URLs, and view stats.
+- Use API endpoints (see code/docs in `apps/management-service/src/routes/`).
+- Run E2E tests:
+  ```powershell
+  npx nx e2e web-app-e2e
+  ```
 
-Use the following command to configure a CI workflow for your workspace:
+---
 
-```sh
-npx nx g ci-workflow
-```
+## Development
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- Add new apps/libs with Nx:
+  ```powershell
+  npx nx generate @nx/node:app my-new-service
+  ```
+- Lint, format, and test code with Nx commands.
+- Use shared code from `libs/shared`.
 
-## Install Nx Console
+---
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+## Contributing
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+1. Fork the repo and create your branch.
+2. Make your changes and add tests.
+3. Submit a pull request.
 
-## Useful links
+---
 
-Learn more:
+## License
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MIT
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---
+
+## Credits
+
+Created by Shahar and contributors.
