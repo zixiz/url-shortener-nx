@@ -73,7 +73,7 @@ libs/
 
 1. Clone the repository:
    ```powershell
-   git clone <your-repo-url>
+   git clone https://github.com/zixiz/url-shortener-nx.git
    cd url-shortener-nx
    ```
 2. Install dependencies:
