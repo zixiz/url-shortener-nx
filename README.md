@@ -99,10 +99,6 @@ libs/
 - Access the web app at [http://localhost:4200](http://localhost:4200) (or your configured port).
 - Register/login, create short URLs, and view stats.
 - Use API endpoints (see code/docs in `apps/management-service/src/routes/`).
-- Run E2E tests:
-  ```powershell
-  npx nx e2e web-app-e2e
-  ```
 
 ---
 
