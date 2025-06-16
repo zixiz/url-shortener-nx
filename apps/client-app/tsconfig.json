@@ -1,0 +1,26 @@
+{
+  // "extends": "../../tsconfig.base.json", // Usually extends the root base
+  "compilerOptions": {
+    "baseUrl": ".", // Sets the base for path resolution to apps/client-app/
+    "paths": {
+      "@/*": ["src/*"] // Allows imports like '@/store/...' to map to apps/client-app/src/store/...
+    },
+    // ... other Vite/React specific TS options ...
+    "target": "ES2020", // Or newer
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler", // "bundler" is common for Vite
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true, // Vite handles transpilation and bundling
+    "jsx": "react-jsx",
+    "strict": true, // Good to enable strict mode
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src", "vite.config.ts", "index.html", "postcss.config.js", "tailwind.config.js"], // Updated postcss/tailwind config names
+  "exclude": ["node_modules", "dist", "build", "coverage", "cypress", "e2e", "playwright"], }

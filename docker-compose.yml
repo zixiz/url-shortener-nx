@@ -1,39 +1,177 @@
-version: '3.8'
+# version: '3.8'
+
+# services:
+#   postgres_main:
+#     image: postgres:15
+#     container_name: postgres_main_dev
+#     environment:
+#       POSTGRES_USER: root        # Choose consistent credentials
+#       POSTGRES_PASSWORD: root
+#       POSTGRES_DB: url_shortener_db # Consolidated DB name
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_main_data:/var/lib/postgresql/data
+#     restart: unless-stopped
+
+#   redis:
+#     image: redis:7-alpine
+#     container_name: redis_dev
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/data
+#     restart: unless-stopped
+
+#   rabbitmq:
+#     image: rabbitmq:3.12-management
+#     container_name: rabbitmq_dev
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     volumes:
+#       - rabbitmq_data:/var/lib/rabbitmq/
+#     restart: unless-stopped
+
+# volumes:
+#   postgres_main_data:
+#   redis_data:
+#   rabbitmq_data:
+
+# url-shortener-nx/docker-compose.yml
 
 services:
+  # --- External Dependencies ---
   postgres_main:
-    image: postgres:15
-    container_name: postgres_main_dev
+    image: postgres:15-alpine
+    container_name: postgres_main_app
     environment:
-      POSTGRES_USER: root        # Choose consistent credentials
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: url_shortener_db # Consolidated DB name
+      POSTGRES_USER: ${DB_USER:-urlshorteneruser} 
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-urlshortenerpass}
+      POSTGRES_DB: ${DB_NAME:-url_shortener_db}
     ports:
-      - "5432:5432"
+      - "${DB_HOST_PORT:-5432}:5432"
     volumes:
-      - postgres_main_data:/var/lib/postgresql/data
+      - postgres_main_data_vol:/var/lib/postgresql/data
+    networks: # Add services to the custom network
+      - app_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-urlshorteneruser} -d ${DB_NAME:-url_shortener_db} -q"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
-    container_name: redis_dev
+    container_name: redis_app
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     volumes:
-      - redis_data:/data
+      - redis_data_vol:/data
+    networks:
+      - app_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   rabbitmq:
-    image: rabbitmq:3.12-management
-    container_name: rabbitmq_dev
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq_app
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_NODE_HOST_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:15672"
+    environment: # Using defaults from root .env for consistency
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_data_vol:/var/lib/rabbitmq/
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # --- Application Services ---
+  management-service:
+    build:
+      context: . # Build context is the root of your Nx workspace
+      dockerfile: ./apps/management-service/Dockerfile # Path to its Dockerfile
+    container_name: management_service_app
+    env_file:
+      - ./apps/management-service/.env # Load its specific .env file
+    environment: # You can also pass additional/override variables here
+      NODE_ENV: development
+      PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001} # Ensure container uses this port
+      # NODE_ENV: development
+      # Variables from root .env can be passed here if not using complex substitutions in service .env
+      # DB_HOST_DOCKER: ${DB_HOST_DOCKER:-postgres_main} # Example
+    ports:
+      - "${MANAGEMENT_SERVICE_HOST_PORT:-3001}:${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}"
+    depends_on:
+      postgres_main:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis: # Only if management-service DIRECTLY uses Redis (currently it does for stats)
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+    # For development with hot-reloading, you might add volumes to map source code:
+    # volumes:
+    #   - ./apps/management-service/src:/app/src # Map source for backend
+    #   - /app/node_modules # Anonymous volume to prevent host node_modules from overwriting container's
+  redirect-service:
+    build:
+      context: .
+      dockerfile: ./apps/redirect-service/Dockerfile
+    container_name: redirect_service_app
+    env_file:
+      - ./apps/redirect-service/.env
+    environment:
+      PORT: ${REDIRECT_SERVICE_INTERNAL_PORT:-3003}
+    ports:
+      - "${REDIRECT_SERVICE_HOST_PORT:-3003}:${REDIRECT_SERVICE_INTERNAL_PORT:-3003}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  client-app: # <--- NEW REACT VITE FRONTEND
+    build:
+      context: .
+      dockerfile: ./apps/client-app/Dockerfile
+      args: # Pass build arguments to Vite
+        VITE_MANAGEMENT_API_URL_ARG: ${VITE_MANAGEMENT_API_URL_BUILD_ARG}
+        VITE_APP_BASE_URL_ARG: ${VITE_APP_BASE_URL_BUILD_ARG}
+    container_name: client_app_app
+    ports:
+      - "${CLIENT_APP_HOST_PORT:-4200}:${CLIENT_APP_INTERNAL_PORT:-80}" # Map host 4200 to Nginx 80
+    depends_on:
+      - management-service # So API is available when frontend loads
+    networks:
+      - app_network
     restart: unless-stopped
 
 volumes:
-  postgres_main_data:
-  redis_data:
-  rabbitmq_data:
+  postgres_main_data_vol:
+  redis_data_vol:
+  rabbitmq_data_vol:
+
+networks:
+  app_network:
+    driver: bridge

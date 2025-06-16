@@ -1,0 +1,59 @@
+{
+  "name": "@url-shortener-nx/client-app",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "nx": {
+    "tags": [
+      "app",
+      "frontend",
+      "react",
+      "vite"
+    ],
+    "targets": {
+      "build": {
+        "executor": "@nx/vite:build",
+        "outputs": [
+          "{options.outputPath}"
+        ],
+        "defaultConfiguration": "production",
+        "options": {
+          "outputPath": "dist/apps/client-app"
+        },
+        "configurations": {
+          "development": {
+            "mode": "development"
+          },
+          "production": {
+            "mode": "production"
+          }
+        }
+      },
+      "serve": {
+        "executor": "@nx/vite:dev-server",
+        "defaultConfiguration": "development",
+        "options": {
+          "buildTarget": "client-app:build"
+        },
+        "configurations": {
+          "development": {
+            "buildTarget": "client-app:build:development",
+            "hmr": true
+          },
+          "production": {
+            "buildTarget": "client-app:build:production",
+            "hmr": false
+          }
+        }
+      },
+      "lint": {
+        "executor": "@nx/eslint:lint"
+      }
+    }
+  }
+}

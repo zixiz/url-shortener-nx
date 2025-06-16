@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/apps/client-app", // Or your output dir
+    "module": "ESNext", // Vite typically uses ESNext
+    "moduleResolution": "Bundler", // Or "NodeNext" or "Node" - "Bundler" is good for Vite
+    "target": "ESNext",
+    "jsx": "react-jsx", // Common for Vite + React
+    "allowJs": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true, // Vite handles emission, tsc is for type checking
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "types": [
+      "node", // Keep if you use Node.js types (less common in pure frontend Vite)
+      "vite/client" // <--- ADD THIS LINE
+    ],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"] // Ensure DOM is included for browser APIs
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.js",
+    "src/**/*.test.js",
+    "src/**/*.spec.jsx",
+    "src/**/*.test.jsx"
+  ],
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"]
+}

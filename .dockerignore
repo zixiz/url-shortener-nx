@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node - Local development node_modules should NOT be part of the Docker build context
+# We will install fresh node_modules inside the Docker image layers.
+node_modules/
+apps/**/node_modules/
+libs/**/node_modules/
+
+# Nx Cache and Local Build Output
+# The Docker build process will create its own 'dist' inside the image.
+.nx/cache/
+dist/ 
+tmp/
+
+# IDE / OS specific
+.vscode/
+.idea/
+*.DS_Store
+*.suo
+*.user
+*.log # General logs, specific app logs inside containers are fine
+*.tmp
+
+# Local environment files - these should NOT be copied into the image directly.
+# They will be supplied to containers via docker-compose env_file or environment.
+.env
+.env.*
+!/.env.example # If you want to keep .env.example available for reference (rarely needed in image)
+apps/**/.env
+apps/**/.env.*
+!apps/**/.env.example
+
+# Test reports / coverage
+coverage/
+junit.xml
+
+# Other potentially large or unnecessary files
+# Add any other specific files or patterns to ignore

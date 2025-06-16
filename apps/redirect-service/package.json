@@ -12,7 +12,7 @@
         "defaultConfiguration": "production",
         "options": {
           "platform": "node",
-          "outputPath": "apps/redirect-service/dist",
+          "outputPath": "dist/apps/redirect-service",
           "format": [
             "cjs"
           ],

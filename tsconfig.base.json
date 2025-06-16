@@ -1,26 +1,28 @@
-// url-shortener-nx/tsconfig.base.json
 {
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
-    "declaration": false, // Default for applications
-    "moduleResolution": "node", // Or NodeNext if that's your workspace default
-    "emitDecoratorMetadata": true,   // <--- Good to have as a base
-    "experimentalDecorators": true, // <--- Good to have as a base
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es2020", // Or newer like es2022
-    "module": "esnext",  // Or commonjs if that's your workspace default
-    "lib": ["es2020", "dom"], // "dom" might be needed for Next.js
+    "target": "es2020",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      // Your Nx path aliases will be here
-      "@url-shortener-nx/management-service": ["apps/management-service/src/main.ts"],
-      "@url-shortener-nx/redirect-service": ["apps/redirect-service/src/main.ts"],
-      "@url-shortener-nx/web-app": ["apps/web-app/src/main.tsx"], // Or appropriate entry for Next.js
-      "@url-shortener-nx/shared": ["libs/shared/src/index.ts"]
+      "@url-shortener-nx/management-service": [
+        "apps/management-service/src/main.ts"
+      ],
+      "@url-shortener-nx/redirect-service": [
+        "apps/redirect-service/src/main.ts"
+      ],
+      "@url-shortener-nx/shared": ["libs/shared/src/index.ts"],
+      "@url-shortener-nx/web-app": ["apps/web-app/src/main.tsx"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true
