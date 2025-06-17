@@ -62,14 +62,13 @@ services:
   # --- Application Services ---
   management-service:
     build:
-      context: . # Build context is the root of your Nx workspace
-      dockerfile: ./apps/management-service/Dockerfile # Path to its Dockerfile
+      context: . 
+      dockerfile: ./apps/management-service/Dockerfile 
     container_name: management_service_app
     env_file:
-      - ./apps/management-service/.env # Load its specific .env file
+      - ./apps/management-service/.env
     environment:
-      # Defaults for when apps/management-service/.env is not present or doesn't define these
-      NODE_ENV: ${NODE_ENV_MANAGEMENT:-development} # Default to development for synchronize:true
+      NODE_ENV: ${NODE_ENV_MANAGEMENT:-development} 
       PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}
       DATABASE_URL: postgresql://${DB_USER:-urlshorteneruser}:${DB_PASSWORD:-urlshortenerpass}@postgres_main:${DB_PORT_INTERNAL:-5432}/${DB_NAME:-url_shortener_db}
       REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379} # Assuming default Redis has no user/pass
@@ -122,7 +121,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/client-app/Dockerfile
-      args: # Pass build arguments to Vite
+      args:
         VITE_MANAGEMENT_API_URL_ARG: ${VITE_MANAGEMENT_API_URL_BUILD_ARG:-http://localhost:3001/api}
         VITE_APP_BASE_URL_ARG: ${VITE_APP_BASE_URL_BUILD_ARG:-http://localhost:3003}
     container_name: client_app_app

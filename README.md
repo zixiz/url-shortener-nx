@@ -78,48 +78,72 @@ The application follows a 3-service architecture:
 
 ## Getting Started (Docker Setup - Recommended)
 
-This is the easiest way to get the entire application stack running.
+This is the easiest way to get the entire application stack running with default development settings.
 
 1.  **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/zixiz/url-shortener-nx.git
+    git clone https://github.com/zixiz/url-shortener-nx.git # Replace with your actual repo URL
     cd url-shortener-nx
     ```
 
-2.  **Configure Environment:**
+2.  **Install Workspace Dependencies:**
+    (This step is primarily for local development tools like Nx CLI, but good to run once.)
 
-    - Copy the root example environment file: `cp .env.example .env`
-    - Review and modify `url-shortener-nx/.env` if you need to change default host ports or default credentials for external services (PostgreSQL, RabbitMQ). The defaults provided should work for a clean local setup.
-    - Service-specific configurations (like JWT secret, API keys for external services if any) are defined with defaults in `docker-compose.yml` but can be overridden by creating `.env` files inside each `apps/<service-name>/` directory (e.g., `apps/management-service/.env`). For this project, the defaults in `docker-compose.yml` (which reference the root `.env`) should suffice for initial startup.
+    ```bash
+    npm install
+    ```
 
-3.  **Build and Run Docker Containers:**
+3.  **Configure Environment Variables:**
+    This project uses `.env` files for service-specific configurations and a root `.env` file for Docker Compose overrides. Example files are provided.
+
+    - **Root Configuration (Optional - for Docker Compose Overrides):**
+      To override default host ports or default credentials for external services (PostgreSQL, RabbitMQ), create a `.env` file in the project root:
+
+      ```bash
+      cp .env.example .env
+      ```
+
+      Then, edit the new `url-shortener-nx/.env` file with your desired values. If you skip this step, Docker Compose will use the defaults specified within `docker-compose.yml`.
+
+    - **Service-Specific Configurations (Required for `env_file` directive):**
+      The `docker-compose.yml` is configured to look for `.env` files for each application service. You **must create these files**, but they can be initially empty to use the defaults provided in `docker-compose.yml`. For custom settings (like a different JWT secret for `management-service`), you would edit these files.
+
+      Create the following files by copying their examples:
+
+      ```bash
+      cp apps/management-service/.env.example apps/management-service/.env
+      cp apps/redirect-service/.env.example apps/redirect-service/.env
+      ```
+
+      And for the client application (for local Vite development, though Docker build uses ARGs):
+
+      ```bash
+      cp apps/client-app/.env.example apps/client-app/.env
+      ```
+
+      **Important for Backend Services in Docker:** The default values set in `docker-compose.yml`'s `environment` section for `management-service` and `redirect-service` are already configured to use Docker service names (e.g., `postgres_main`, `redis`, `rabbitmq`) for inter-container communication. You typically won't need to change `DATABASE_URL`, `REDIS_URL`, `RABBITMQ_URL` in `apps/management-service/.env` or `apps/redirect-service/.env` when running with Docker Compose unless you have a very specific custom setup. Leaving these files empty after copying will use the Docker-ready defaults from `docker-compose.yml`.
+
+4.  **Build and Run Docker Containers:**
     From the workspace root:
 
     ```bash
-    docker-compose build
-    docker-compose up -d
+    docker-compose build # Build images (only needed the first time or after Dockerfile changes)
+    docker-compose up -d   # Start all services in detached mode
     ```
 
-    This will:
+5.  **Access Services:**
 
-    - Build Docker images for `management-service`, `redirect-service`, and `client-app`.
-    - Start containers for these services plus PostgreSQL, Redis, and RabbitMQ.
+    - **Client App (Frontend):** `http://localhost:4200` (or the `CLIENT_APP_HOST_PORT` you set in the root `.env`)
+    - **Management Service API:** `http://localhost:3001` (or `MANAGEMENT_SERVICE_HOST_PORT`)
+    - **Redirect Service:** `http://localhost:3003` (or `REDIRECT_SERVICE_HOST_PORT`)
+    - **RabbitMQ Management UI:** `http://localhost:15672` (user: `guest`, pass: `guest`)
 
-4.  **Access Services:**
-
-    - **Frontend (Client App):** `http://localhost:4200` (or `${CLIENT_APP_HOST_PORT}`)
-    - **Management Service API (for direct testing):** `http://localhost:3001` (or `${MANAGEMENT_SERVICE_HOST_PORT}`)
-    - **Redirect Service (for testing short URLs):** `http://localhost:3003` (or `${REDIRECT_SERVICE_HOST_PORT}`)
-    - **RabbitMQ Management UI:** `http://localhost:15672` (user: `guest`, pass: `guest` by default)
-    - **PostgreSQL:** Connect via pgAdmin/DBeaver to `localhost:5432` (user/pass/db from root `.env`)
-    - **Redis:** Connect via `redis-cli` on `localhost:6379`
-
-5.  **Stopping Services:**
+6.  **Stopping Services:**
     ```bash
     docker-compose down
     ```
-    To also remove volumes (data for Postgres, Redis, RabbitMQ):
+    To also remove data volumes (PostgreSQL data, Redis data, RabbitMQ data):
     ```bash
     docker-compose down --volumes
     ```
