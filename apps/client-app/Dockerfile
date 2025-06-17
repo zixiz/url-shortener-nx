@@ -1,5 +1,3 @@
-# apps/client-app/Dockerfile
-
 # ---- Stage 1: Build the React application ----
 FROM node:22-slim AS builder
 WORKDIR /app
