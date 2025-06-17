@@ -83,7 +83,7 @@ This is the easiest way to get the entire application stack running with default
 1.  **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/zixiz/url-shortener-nx.git # Replace with your actual repo URL
+    git clone https://github.com/zixiz/url-shortener-nx.git
     cd url-shortener-nx
     ```
 
