@@ -98,14 +98,12 @@ export default function MyUrlsPage() {
     <AuthGuard> 
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
+          {user && (
+            <Typography component="h1" variant="h5" gutterBottom>Welcome, {user.username || user.email}!</Typography>
+          )}
+          <Typography variant="h5" component="h2" gutterBottom>
             My Shortened URLs
           </Typography>
-          
-          {/* Welcome message - user should be defined if AuthGuard passed */}
-          {user && (
-            <Typography sx={{mt: 1, mb: 3}}>Welcome, {user.username || user.email}!</Typography>
-          )}
           
           {isLoadingUrls ? (
             renderSkeletons()
