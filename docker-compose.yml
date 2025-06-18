@@ -71,7 +71,7 @@ services:
       NODE_ENV: ${NODE_ENV_MANAGEMENT:-development} 
       PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}
       DATABASE_URL: postgresql://${DB_USER:-urlshorteneruser}:${DB_PASSWORD:-urlshortenerpass}@postgres_main:${DB_PORT_INTERNAL:-5432}/${DB_NAME:-url_shortener_db}
-      REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379} # Assuming default Redis has no user/pass
+      REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379} 
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:${RABBITMQ_NODE_INTERNAL_PORT:-5672}
       JWT_SECRET: ${JWT_SECRET_GLOBAL:-"aVerySecureDefaultSecretForDevelopment!@#"} 
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN_GLOBAL:-"3600"}
@@ -126,9 +126,9 @@ services:
         VITE_APP_BASE_URL_ARG: ${VITE_APP_BASE_URL_BUILD_ARG:-http://localhost:3003}
     container_name: client_app_app
     ports:
-      - "${CLIENT_APP_HOST_PORT:-4200}:${CLIENT_APP_INTERNAL_PORT:-80}" # Map host 4200 to Nginx 80
+      - "${CLIENT_APP_HOST_PORT:-4200}:${CLIENT_APP_INTERNAL_PORT:-80}"
     depends_on:
-      - management-service # So API is available when frontend loads
+      - management-service
     networks:
       - app_network
     restart: unless-stopped

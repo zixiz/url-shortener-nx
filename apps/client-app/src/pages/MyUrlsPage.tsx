@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import AuthGuard from '../components/AuthGuard';
+// apps/client-app/src/pages/MyUrlsPage.tsx
+import { useState, useEffect } from 'react';
+// Ensure AuthGuard path is correct (e.g., ../components/AuthGuard.js if MyUrlsPage is in src/pages and AuthGuard in src/components)
+import AuthGuard from '../components/AuthGuard.js'; 
 import {
   Typography, Container, Box, Alert,
-  List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Tooltip, Paper, Divider, Link as MuiLink,
-  Skeleton 
+  IconButton, Tooltip, Paper, Link as MuiLink, Skeleton,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+  useTheme, useMediaQuery // Make sure useTheme is imported
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { useAppSelector } from '../store/hooks';
-import apiClient from '../lib/apiClient'; 
+import { Link as RouterLink } from 'react-router-dom'; // For internal navigation <MuiLink component={RouterLink} ...>
+import { useAppSelector } from '../store/hooks.js'; // Adjust path as needed
+import apiClient from '../lib/apiClient.js';      // Adjust path as needed
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useSnackbar } from '../context/SnackbarContext';
+import { useSnackbar } from '../context/SnackbarContext.js'; // Adjust path as needed
 
 interface ShortenedUrl {
   id: string;
@@ -23,6 +26,9 @@ interface ShortenedUrl {
 }
 
 export default function MyUrlsPage() {
+  const theme = useTheme(); // Hook to access the theme object for breakpoints
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // True if screen width < 'sm' breakpoint
+
   const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth); 
 
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
@@ -34,6 +40,7 @@ export default function MyUrlsPage() {
     const fetchUrls = async () => {
       if (!token) { 
         setIsLoadingUrls(false);
+        if (isInitialAuthChecked) setErrorFetchingUrls("Authentication token not found. Please log in again.");
         return;
       }
 
@@ -67,111 +74,148 @@ export default function MyUrlsPage() {
       });
   };
 
-  const renderSkeletons = () => (
-    <Paper elevation={2} sx={{ mt: 2 }}>
-      <List dense>
-        {[...Array(3)].map((_, index) => (
-          <React.Fragment key={`skeleton-${index}`}>
-            <ListItem sx={{ py: 1.5 }}>
-              <ListItemText
-                primary={<Skeleton variant="text" width="60%" sx={{ fontSize: '1rem' }} />}
-                secondary={
-                  <>
-                    <Skeleton variant="text" width="80%" sx={{ mt: 0.5 }} />
-                    <Skeleton variant="text" width="40%" sx={{ mt: 0.5 }} />
-                  </>
-                }
-              />
-              <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
-                <Skeleton variant="circular" width={24} height={24} sx={{mr: 0.5}} />
-                <Skeleton variant="circular" width={24} height={24} />
-              </ListItemSecondaryAction>
-            </ListItem>
-            {index < 2 && <Divider component="li" variant="inset" />}
-          </React.Fragment>
-        ))}
-      </List>
-    </Paper>
+  const renderSkeletonTableRows = () => (
+    [...Array(3)].map((_, index) => (
+      <TableRow key={`skeleton-row-${index}`}>
+        <TableCell sx={{ width: isMobile ? '60%' : '40%', py: 1.5 }}> {/* Adjust py for consistency */}
+            <Skeleton variant="text" width="80%" />
+            {isMobile && <Skeleton variant="text" width="70%" sx={{mt: 0.5, fontSize: '0.8rem'}}/>}
+            {isMobile && <Skeleton variant="text" width="50%" sx={{mt: 0.5, fontSize: '0.7rem'}}/>}
+        </TableCell>
+        {!isMobile && ( // Only render these skeleton cells if not mobile
+            <>
+                <TableCell sx={{ width: '35%', py: 1.5 }}><Skeleton variant="text" width="70%" /></TableCell>
+                <TableCell sx={{ width: '15%', py: 1.5 }}><Skeleton variant="text" width="50%" /></TableCell>
+            </>
+        )}
+        <TableCell align="right" sx={{ width: isMobile ? '40%' : '10%', py: 1.5, pr: {xs: 1, sm: 2} }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Skeleton variant="circular" width={24} height={24} sx={{ mr: 0.5 }} />
+            <Skeleton variant="circular" width={24} height={24} />
+          </Box>
+        </TableCell>
+      </TableRow>
+    ))
   );
 
+  // AuthGuard handles loading and redirection based on auth state
   return (
     <AuthGuard> 
       <Container maxWidth="lg">
         <Box sx={{ my: 4 }}>
           {user && (
-            <Typography component="h1" variant="h5" gutterBottom>Welcome, {user.username || user.email}!</Typography>
+            <Typography variant="h5" component="h1" gutterBottom>Welcome, {user.username || user.email}!</Typography>
           )}
-          <Typography variant="h5" component="h2" gutterBottom>
+          <Typography variant="h4" component="h2" gutterBottom sx={{ mt: user ? 2 : 0 }}>
             My Shortened URLs
           </Typography>
           
-          {isLoadingUrls ? (
-            renderSkeletons()
-          ) : errorFetchingUrls ? (
+          {errorFetchingUrls && !isLoadingUrls && (
             <Alert severity="error" sx={{ my: 2 }}>{errorFetchingUrls}</Alert>
-          ) : urls.length === 0 ? (
-            <Typography sx={{ mt: 3, textAlign: 'center' }}>
-              You haven't created any short URLs yet. Go ahead and <MuiLink component={RouterLink} to="/">create some</MuiLink>!
-            </Typography>
-          ) : (
-            <Paper elevation={2} sx={{ mt: 2 }}>
-              <List dense>
-                {urls.map((url, index) => (
-                  <React.Fragment key={url.id}>
-                    <ListItem
-                      sx={{ 
-                        py: 1.5,
-                      }}
+          )}
+
+          <TableContainer component={Paper} elevation={2} sx={{ 
+            mt: 2, 
+            border: 1, 
+            borderColor: 'divider', 
+            borderRadius: '12px',
+            overflowX: 'auto' // Ensure horizontal scroll on very small if table minWidth is too large
+          }}>
+            <Table sx={{ minWidth: isMobile ? 320 : 700 }} aria-label="my shortened urls table" >
+              <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'medium', width: isMobile ? 'calc(100% - 80px)' : '40%', py:1, px:2 }}>Original URL {isMobile && "/ Short URL / Clicks"}</TableCell>
+                  {!isMobile && <TableCell sx={{ fontWeight: 'medium', width: '35%', py:1, px:2 }}>Shortened URL</TableCell>}
+                  {!isMobile && <TableCell sx={{ fontWeight: 'medium', width: '10%', py:1, px:2 }}>Clicks</TableCell>}
+                  <TableCell align="right" sx={{ fontWeight: 'medium', width: isMobile ? '80px' : '15%', py:1, pr: {xs: 1, sm: 2}, pl:1 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoadingUrls ? (
+                  renderSkeletonTableRows()
+                ) : urls.length === 0 && isInitialAuthChecked && user ? (
+                  <TableRow>
+                    <TableCell colSpan={isMobile ? 2 : 4} align="center" sx={{ py: 3 }}>
+                      <Typography sx={{ mt: 0, textAlign: 'center' }}>
+                        You haven't created any short URLs yet. Go ahead and <MuiLink component={RouterLink} to="/">create some</MuiLink>!
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  urls.map((url) => (
+                    <TableRow
+                      key={url.id}
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
                     >
-                      <ListItemText
-                        primary={
+                      <TableCell 
+                        component="th" 
+                        scope="row"
+                        sx={{ 
+                          py: 1.5, px:2,
+                          wordBreak: 'break-all', 
+                          maxWidth: isMobile ? 'calc(100vw - 120px)' : '350px', // Adjust max width
+                          minWidth: isMobile ? '150px': '200px', // Give it some minWidth
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={url.longUrl}
+                      >
+                        {url.longUrl}
+                        {isMobile && (
+                          <>
+                            <MuiLink 
+                              href={url.fullShortUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              sx={{ display: 'block', fontWeight: 'medium', color: 'primary.main', mt: 0.5, fontSize: '0.8rem', wordBreak: 'break-all' }}
+                            >
+                              {url.fullShortUrl}
+                            </MuiLink>
+                            <Typography component="span" variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                              Clicks: {url.clickCount}
+                            </Typography>
+                          </>
+                        )}
+                      </TableCell>
+                      {!isMobile && (
+                        <TableCell sx={{ wordBreak: 'break-all', py: 1.5, px:2 }}>
                           <MuiLink 
                             href={url.fullShortUrl} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }}
+                            sx={{ fontWeight: 'medium', color: 'primary.main' }}
                           >
                             {url.fullShortUrl}
                           </MuiLink>
-                        }
-                        secondary={
-                          <>
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', wordBreak: 'break-all', mt: 0.5 }}>
-                              Original: {url.longUrl.length > 80 ? `${url.longUrl.substring(0, 80)}...` : url.longUrl}
-                            </Typography>
-                            <Typography component="span" variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
-                              Created: {new Date(url.createdAt).toLocaleDateString()} | Clicks: {url.clickCount}
-                            </Typography>
-                          </>
-                        }
-                      />
-                      <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
+                        </TableCell>
+                      )}
+                      {!isMobile && <TableCell sx={{py: 1.5, px:2}}>{url.clickCount}</TableCell>}
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr: {xs:1, sm:1}, py: 1.5, pl:1 }}>
                         <Tooltip title="Copy Short URL">
-                          <IconButton edge="end" size="small" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
+                          <IconButton sx={{p: {xs: 0.5, sm: 1}}} size="small" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
                             <ContentCopyIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Open Original URL in new tab">
+                        <Tooltip title="Open Original URL">
                           <IconButton 
-                            edge="end" 
+                            sx={{p: {xs: 0.5, sm: 1}, ml: {xs: 0, sm: 0.5}}}
                             size="small" 
                             component="a" 
                             href={url.longUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            sx={{ ml: 0.5 }}
                           >
                             <OpenInNewIcon fontSize="small"/>
                           </IconButton>
                         </Tooltip>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                    {index < urls.length - 1 && <Divider component="li" variant="inset" />}
-                  </React.Fragment>
-                ))}
-              </List>
-            </Paper>
-          )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       </Container>
     </AuthGuard>

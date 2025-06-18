@@ -1,15 +1,18 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
-  CircularProgress, Alert, List, ListItem, ListItemText, IconButton, Link as MuiLink, Tooltip,
-  Divider, ListItemSecondaryAction 
+  CircularProgress, Alert, IconButton, Link as MuiLink, Tooltip,
+  InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import SearchIcon from '@mui/icons-material/Search'; 
 
-import { useAppSelector } from '../store/hooks'; 
-import apiClient from '../lib/apiClient';
-import { useSnackbar } from '../context/SnackbarContext';
+import { useAppSelector } from '../store/hooks.js'; 
+import apiClient from '../lib/apiClient.js';
+import { useSnackbar } from '../context/SnackbarContext.js';
+import { useThemeMode } from '../components/ViteThemeRegistry.js'; // To get current theme mode
+import { useTheme } from '@mui/material/styles';
 
 interface CreatedUrlResponse {
   id: string;
@@ -29,13 +32,18 @@ interface AnonymousLink {
 const MAX_ANONYMOUS_LINKS = 5;
 const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
 
+// Image URL from the Stitch example - ENSURE YOU HAVE RIGHTS TO USE OR REPLACE
+const HERO_IMAGE_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuC5oYzQi-XEkOhBaLGMWgGitAnx3gRVoqWT098YNvzmwhSvI4AWSJnk4FymirDetf-TBGRvO0KY0l7GzLNv70NYcKLFWDSWMqMqbd8VySlbFads8r3AWJGgU7UTAKsuq_RVYD_aR-ivg69UqK2Woe79CfeW0Hlzfj52JSx-lavobiO6salvSj5OpTQ8xsJb2sNa6dbJvrMXYMFD-z5iw2Y3L8Lzn8a9OWmGWvN3hnQIpMczakixWwnEOnO1iMV1NbLD3bW_A5mE8tQ";
+
 export default function HomePage() {
+  const theme = useTheme();
   const [longUrl, setLongUrl] = useState('');
   const [createdUrl, setCreatedUrl] = useState<CreatedUrlResponse | null>(null);
   const [isFormLoading, setIsFormLoading] = useState(false); 
   const [formError, setFormError] = useState<string | null>(null);
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
   const { showSnackbar } = useSnackbar();
+  const { mode } = useThemeMode(); 
 
   const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
@@ -51,13 +59,19 @@ export default function HomePage() {
         localStorage.removeItem(ANONYMOUS_LINKS_STORAGE_KEY);
       }
     }
-  }, []); // Empty dependency array, runs once on mount
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsFormLoading(true);
     setFormError(null);
     setCreatedUrl(null);
+
+    if (!longUrl.trim()) {
+        setFormError("Please enter a URL to shorten.");
+        setIsFormLoading(false);
+        return;
+    }
 
     try {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
@@ -80,8 +94,7 @@ export default function HomePage() {
           return updatedLinks;
         });
       }
-      setLongUrl('');
-
+      setLongUrl(''); 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
       setFormError(errorMessage); 
@@ -100,145 +113,290 @@ export default function HomePage() {
       });
   };
   
-
   if (!isInitialAuthChecked) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 200px)' /* Adjust height */ }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 200px)' }}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4, textAlign: 'center' }}>
-        <Typography variant="h3" component="h1" gutterBottom color="primary">
-          URL Shorty
-        </Typography>
-        <Typography variant="h6" color="text.secondary" paragraph>
-          Enter your long URL to get a shortened version.
-        </Typography>
-      </Box>
-
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
-        <Box component="form" onSubmit={handleSubmit} noValidate>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="longUrl"
-            label="Your Long URL (e.g., https://example.com/very/long/path)"
-            name="longUrl"
-            autoFocus
-            value={longUrl}
-            onChange={(e) => {
-              setLongUrl(e.target.value);
-              if (formError) setFormError(null); 
-            }}
-            disabled={isFormLoading}
-            placeholder="https://..."
-            error={!!formError}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            size="large"
-            sx={{ mt: 2, mb: 2, py: 1.5 }}
-            disabled={isFormLoading}
-          >
-            {isFormLoading ? <CircularProgress size={24} color="inherit" /> : 'Shorten URL'}
-          </Button>
-        </Box>
-      </Paper>
-
-      {formError && (
-        <Alert severity="error" sx={{ mb: 3 }}>{formError}</Alert>
-      )}
-
-      {createdUrl && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4, backgroundColor: 'success.light' }}>
-          <Typography variant="h6" gutterBottom sx={{ color: 'success.dark' }}>Your Shortened URL:</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <MuiLink href={createdUrl.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'bold', color: 'success.dark', wordBreak: 'break-all' }}>
-              {createdUrl.fullShortUrl}
-            </MuiLink>
-            <Tooltip title="Copy Short URL">
-              <IconButton onClick={() => handleCopyToClipboard(createdUrl.fullShortUrl)} size="small" sx={{ color: 'success.dark' }}>
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-             <Tooltip title="Open Short URL">
-               <IconButton 
-                component="a" 
-                href={createdUrl.fullShortUrl} 
-                target="_blank" rel="noopener noreferrer" 
-                size="small" 
-                sx={{ color: 'success.dark' }}
-              >
-                <OpenInNewIcon fontSize="small"/>
-              </IconButton>
-            </Tooltip>
+    <Box sx={{ flexGrow: 1 }}> {/* Root container for page background */}
+      <Container maxWidth="lg" sx={{pt: {xs: 0, md: 0}, pb: 4, px: {xs: 0, sm: 2} }}>
+        
+        {/* Hero Section */}
+        <Box 
+          sx={{
+            minHeight: { xs: '400px', sm: '480px' },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, sm: 3 }, 
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%), url("${HERO_IMAGE_URL}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: { xs: 0, sm: '12px' }, 
+            alignItems: 'flex-start', 
+            justifyContent: 'flex-end', 
+            p: { xs: 3, sm: 5, md: 6 }, 
+            color: 'white',
+            mb: 6, 
+          }}
+        >
+          <Box> 
+            <Typography
+              variant="h2" 
+              component="h1"
+              sx={{ 
+                fontWeight: 900, 
+                lineHeight: {xs: 1.1, sm: 'tight'}, 
+                letterSpacing: '-0.033em',
+                mb: 1,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' } 
+              }}
+            >
+              Shorten long URLs
+            </Typography>
+            <Typography
+              variant="h6" 
+              component="h2"
+              sx={{ 
+                lineHeight: 'normal',
+                maxWidth: '55ch', 
+                fontWeight: 400, 
+                fontSize: {xs: '0.875rem', sm: '1rem'} 
+              }}
+            >
+              URL Shorty allows you to shorten long links from websites like Facebook, YouTube, Twitter, LinkedIn and top sites on the Internet, making your links easier to share.
+            </Typography>
           </Box>
-          <Typography variant="caption" display="block" sx={{ mt: 1, wordBreak: 'break-all', color: 'success.dark' }}>
-            Original: {createdUrl.longUrl}
-          </Typography>
-        </Paper>
-      )}
 
-      {/* Only show anonymous links if initial auth check is done AND user is NOT authenticated */}
-      {isInitialAuthChecked && !authenticatedUser && anonymousLinks.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom sx={{mt: 4}}>
-            My Recent Anonymous Links
-          </Typography>
-          <Paper elevation={1}>
-            <List dense>
-              {anonymousLinks.map((link, index) => (
-                <React.Fragment key={link.shortId}>
-                  <ListItem 
-                    sx={{ py: 1.5 }}
-                  >
-                    <ListItemText
-                      primary={
-                        <MuiLink href={link.fullShortUrl} target="_blank" rel="noopener noreferrer" sx={{ fontWeight: 'medium', wordBreak: 'break-all', color: 'primary.main' }}>
-                          {link.fullShortUrl}
-                        </MuiLink>
-                      }
-                      secondary={
-                        <Typography component="span" variant="caption" sx={{ display: 'block', wordBreak: 'break-all', mt: 0.5 }}>
-                          Original: {link.longUrl.length > 60 ? `${link.longUrl.substring(0, 60)}...` : link.longUrl}
-                        </Typography>
-                      }
-                    />
-                    <ListItemSecondaryAction sx={{ right: { xs: 8, sm: 16 } }}>
-                      <Tooltip title="Copy Short URL">
-                        <IconButton edge="end" size="small" onClick={() => handleCopyToClipboard(link.fullShortUrl)}>
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                       <Tooltip title="Open Short URL">
-                         <IconButton 
-                          edge="end" 
-                          size="small" 
-                          component="a" 
+          {/* Form within Hero */}
+          <Box 
+            component="form" 
+            onSubmit={handleSubmit} 
+            noValidate 
+            sx={{ 
+              width: '100%', 
+              maxWidth: { xs: '100%', sm: '480px' },
+              display: 'flex',
+              borderRadius: '12px', 
+              overflow: 'hidden', 
+              border: 1,
+              borderColor: mode === 'light' ? 'grey.400' : 'grey.700', 
+              backgroundColor: mode === 'light' ? 'common.white' : 'grey.800', 
+              height: { xs: '3.5rem', sm: '4rem' }, 
+            }}
+          >
+            <TextField
+              fullWidth
+              id="longUrlHero"
+              variant="outlined"
+              placeholder="Paste a link here"
+              value={longUrl}
+              onChange={(e) => {
+                setLongUrl(e.target.value);
+                if (formError) setFormError(null); 
+              }}
+              disabled={isFormLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ml:1}}>
+                    <SearchIcon sx={{ color: mode === 'light' ? 'grey.600' : 'grey.400' }} />
+                  </InputAdornment>
+                ),
+                sx: { 
+                  border: 'none', 
+                  borderRadius: 0, 
+                  backgroundColor: 'transparent',
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                  height: '100%',
+                  color: 'text.primary',
+                  '& input::placeholder': { color: 'text.secondary' },
+                  '& .MuiInputBase-input': { pl: 1, pr: 0.5 }
+                }
+              }}
+              sx={{ flexGrow: 1 }}
+            />
+            <Button
+              type="submit"
+              variant="contained" 
+              color={mode === 'light' ? 'secondary' : 'primary'}
+              size="large" 
+              disabled={isFormLoading}
+              sx={{ 
+                minWidth: {xs: '80px', sm: '100px'},
+                height: '100%',
+                px: { xs: 2, sm: 3 },
+                borderTopLeftRadius: 0,
+                borderBottomLeftRadius: 0,
+                borderTopRightRadius: '10px',
+                borderBottomRightRadius: '10px',
+                boxShadow: 'none',
+                fontWeight: 'bold',
+                ...(mode === 'light' && {
+                    backgroundColor: '#dce8f3', 
+                    color: '#101518',
+                    '&:hover': { backgroundColor: '#C5D9E9' }
+                }),
+              }}
+            >
+              {isFormLoading ? <CircularProgress size={24} color="inherit" /> : 'Shorten'}
+            </Button>
+          </Box>
+        </Box> {/* End of Hero Section Box */}
+        
+        {/* Form Error Display */}
+        {formError && (
+          <Alert severity="error" sx={{ mb: 3, mt: 2 }}>{formError}</Alert>
+        )}
+
+        {/* Created URL Display - THEMED */}
+        {createdUrl && (
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: 3, 
+              mb: 4, 
+              // Theme-aware background
+              bgcolor: theme.palette.mode === 'light' ? 'primary.light' : theme.palette.action.selected,
+              borderRadius: '8px', 
+            }}
+          >
+            <Typography 
+              variant="h6" 
+              gutterBottom 
+              sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.primary' }}
+            >
+              Your Shortened URL:
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <MuiLink 
+                href={createdUrl.fullShortUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  wordBreak: 'break-all',
+                  color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' 
+                }}
+              >
+                {createdUrl.fullShortUrl}
+              </MuiLink>
+              <Tooltip title="Copy Short URL">
+                <IconButton 
+                  onClick={() => handleCopyToClipboard(createdUrl.fullShortUrl)} 
+                  size="small" 
+                  sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+               <Tooltip title="Open Short URL">
+                 <IconButton 
+                  component="a" 
+                  href={createdUrl.fullShortUrl} 
+                  target="_blank" rel="noopener noreferrer" 
+                  size="small" 
+                  sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
+                >
+                  <OpenInNewIcon fontSize="small"/>
+                </IconButton>
+              </Tooltip>
+            </Box>
+            <Typography 
+              variant="caption" 
+              display="block" 
+              sx={{ 
+                mt: 1, 
+                wordBreak: 'break-all', 
+                color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.secondary'
+              }}
+            >
+              Original: {createdUrl.longUrl}
+            </Typography>
+          </Paper>
+        )}
+
+        {/* Anonymous Links Section */}
+        {isInitialAuthChecked && !authenticatedUser && anonymousLinks.length > 0 && (
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 4, textAlign: 'left' }}>
+              Recently Shortened URLs
+            </Typography>
+            <TableContainer component={Paper} elevation={1} sx={{
+              border: 1, 
+              borderColor: 'divider', 
+              borderRadius: '12px', // Apply border radius to TableContainer
+              // overflow: 'hidden', // Already handled by TableContainer
+            }}>
+              <Table sx={{ minWidth: 650 /* Adjust as needed for content */ }} aria-label="recently shortened urls">
+                <TableHead sx={{ bgcolor: theme.palette.action.hover /* Header background */ }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'medium', width: '40%' }}>Original URL</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', width: '35%' }}>Shortened URL</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'medium', width: '25%', pr: 2 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {anonymousLinks.map((link) => (
+                    <TableRow
+                      key={link.shortId}
+                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
+                    >
+                      <TableCell 
+                        component="th" 
+                        scope="row"
+                        sx={{ 
+                          wordBreak: 'break-all', 
+                          maxWidth: '300px', // Control max width before ellipsis
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title={link.longUrl}
+                      >
+                        {link.longUrl}
+                      </TableCell>
+                      <TableCell sx={{ wordBreak: 'break-all' }}>
+                        <MuiLink 
                           href={link.fullShortUrl} 
                           target="_blank" 
-                          rel="noopener noreferrer"
-                          sx={{ ml: 0.5 }}
+                          rel="noopener noreferrer" 
+                          sx={{ fontWeight: 'medium', color: 'primary.main' }}
                         >
-                          <OpenInNewIcon fontSize="small"/>
-                        </IconButton>
-                      </Tooltip>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  {index < anonymousLinks.length - 1 && <Divider component="li" variant="inset" />} 
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
-        </Box>
-      )}
-    </Container>
+                          {link.fullShortUrl}
+                        </MuiLink>
+                      </TableCell>
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr:1 /* Adjust padding for icons */ }}>
+                        <Tooltip title="Copy Short URL">
+                          <IconButton size="small" onClick={() => handleCopyToClipboard(link.fullShortUrl)}>
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Open Short URL">
+                          <IconButton 
+                            size="small" 
+                            component="a" 
+                            href={link.fullShortUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{ ml: 0.5 }}
+                          >
+                            <OpenInNewIcon fontSize="small"/>
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
+      </Container>
+    </Box>
   );
 }

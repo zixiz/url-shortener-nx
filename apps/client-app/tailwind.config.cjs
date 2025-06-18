@@ -6,7 +6,11 @@ export default {
   ],
   darkMode: 'class', 
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Inter', ...defaultTheme.fontFamily.sans, 'Noto Sans'],
+      },
+    },
   },
   plugins: [],
 };

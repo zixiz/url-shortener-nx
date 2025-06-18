@@ -124,7 +124,7 @@ export default function StatsPage() {
                 Original URL: {urlStats.longUrl}
                </Typography>
             )}
-            <Typography variant="h3" component="p" color="secondary.main" sx={{ fontWeight: 'bold', my: 2 }}>
+            <Typography variant="h3" component="p" color="text.primary" sx={{ fontWeight: 'bold', my: 2 }}>
               {urlStats.clickCount}
             </Typography>
             <Typography variant="body1" color="text.secondary">
