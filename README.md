@@ -76,6 +76,12 @@ The application follows a 3-service architecture:
 
 ---
 
+## Screenshots
+
+Here's a glimpse of the URL Shorty web application in action:
+
+## ![URL Shorty Web App Example](./docs/images/url-shorty-webapp-example.jpg)
+
 ## Getting Started (Docker Setup - Recommended)
 
 This is the easiest way to get the entire application stack running with default development settings.
