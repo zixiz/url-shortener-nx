@@ -3,6 +3,13 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  "scripts": {
+    "typeorm": "ts-node --esm -r tsconfig-paths/register -P ./tsconfig.app.json ../../node_modules/typeorm/cli-esm.js --dataSource src/data-source.ts",
+    "migration:generate": "npm run typeorm -- migration:generate src/migrations/%npm_config_name%",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "schema:drop": "npm run typeorm -- schema:drop"
+  },
   "nx": {
     "targets": {
       "build": {
@@ -31,11 +38,10 @@
           }
         },
         "configurations": {
-          "development": {
-          },
+          "development": {},
           "production": {
             "esbuildOptions": {
-              "sourcemap": false, 
+              "sourcemap": false,
               "outExtension": {
                 ".js": ".js"
               }
@@ -52,7 +58,7 @@
         ],
         "options": {
           "buildTarget": "@url-shortener-nx/management-service:build",
-          "runBuildTargetDependencies": false 
+          "runBuildTargetDependencies": false
         },
         "configurations": {
           "development": {
