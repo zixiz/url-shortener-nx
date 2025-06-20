@@ -13,10 +13,10 @@ interface UrlStats {
 const APP_BASE_URL = (import.meta.env.VITE_APP_BASE_URL || 'http://localhost:3003').replace(/\/$/, "");
 
 export default function StatsPage() {
-  const [inputFieldValue, setInputFieldValue] = useState(''); // What user types
+  const [inputFieldValue, setInputFieldValue] = useState('');
   const [urlStats, setUrlStats] = useState<UrlStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Local error state for this page
+  const [error, setError] = useState<string | null>(null);
 
   // Load initial state from URL params on component mount
   useEffect(() => {
@@ -24,10 +24,9 @@ export default function StatsPage() {
     const shortIdFromUrl = urlParams.get('id');
     if (shortIdFromUrl) {
       setInputFieldValue(shortIdFromUrl);
-      // Automatically fetch stats for the ID from URL
       fetchStats(shortIdFromUrl);
     }
-  }, []); // Only run on mount
+  }, []);
 
   const updateUrlParams = (shortId: string) => {
     const url = new URL(window.location.href);
@@ -36,7 +35,6 @@ export default function StatsPage() {
     } else {
       url.searchParams.delete('id');
     }
-    // Update URL without triggering a page reload
     window.history.replaceState({}, '', url.toString());
   };
 
@@ -85,17 +83,16 @@ export default function StatsPage() {
 
   const handleInputChange = (value: string) => {
     setInputFieldValue(value);
-    if (error) setError(null); // Clear error when user types
-    if (urlStats) setUrlStats(null); // Clear previous stats when input changes
+    if (error) setError(null);
+    if (urlStats) setUrlStats(null);
     
-    // Clear URL params when input is cleared
     if (!value.trim()) {
       updateUrlParams('');
     }
   };
 
   return (
-    <Container maxWidth="sm" sx={{pt: 2, pb: 4}}> {/* Added some top/bottom padding */}
+    <Container maxWidth="sm" sx={{pt: 2, pb: 4}}> 
       <Box sx={{ my: 4, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           URL Click Statistics
