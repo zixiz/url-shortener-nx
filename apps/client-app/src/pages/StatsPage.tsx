@@ -1,6 +1,4 @@
-
-
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, Card, CardContent 
@@ -20,13 +18,34 @@ export default function StatsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); // Local error state for this page
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    let processedShortId = inputFieldValue.trim();
+  // Load initial state from URL params on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shortIdFromUrl = urlParams.get('id');
+    if (shortIdFromUrl) {
+      setInputFieldValue(shortIdFromUrl);
+      // Automatically fetch stats for the ID from URL
+      fetchStats(shortIdFromUrl);
+    }
+  }, []); // Only run on mount
+
+  const updateUrlParams = (shortId: string) => {
+    const url = new URL(window.location.href);
+    if (shortId) {
+      url.searchParams.set('id', shortId);
+    } else {
+      url.searchParams.delete('id');
+    }
+    // Update URL without triggering a page reload
+    window.history.replaceState({}, '', url.toString());
+  };
+
+  const fetchStats = async (shortId: string) => {
+    let processedShortId = shortId.trim();
 
     if (!processedShortId) {
       setError('Please enter a Short URL or ID.');
-      setUrlStats(null); // Clear previous stats
+      setUrlStats(null);
       return;
     }
 
@@ -35,9 +54,9 @@ export default function StatsPage() {
     }
     
     if (!processedShortId || processedShortId === '/') {
-        setError('Invalid Short URL format. Please enter just the ID part or the full short URL.');
-        setUrlStats(null);
-        return;
+      setError('Invalid Short URL format. Please enter just the ID part or the full short URL.');
+      setUrlStats(null);
+      return;
     }
 
     setIsLoading(true);
@@ -47,12 +66,31 @@ export default function StatsPage() {
     try {
       const response = await apiClient.get<UrlStats>(`/stats/${processedShortId}`);
       setUrlStats(response.data);
+      
+      // Update URL params to persist the search
+      updateUrlParams(processedShortId);
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch stats or Short ID not found.';
       setError(errorMessage);
       console.error("Error fetching URL stats:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await fetchStats(inputFieldValue);
+  };
+
+  const handleInputChange = (value: string) => {
+    setInputFieldValue(value);
+    if (error) setError(null); // Clear error when user types
+    if (urlStats) setUrlStats(null); // Clear previous stats when input changes
+    
+    // Clear URL params when input is cleared
+    if (!value.trim()) {
+      updateUrlParams('');
     }
   };
 
@@ -78,11 +116,7 @@ export default function StatsPage() {
             name="shortIdInput"
             autoFocus
             value={inputFieldValue}
-            onChange={(e) => {
-                setInputFieldValue(e.target.value);
-                if (error) setError(null); // Clear error when user types
-                if (urlStats) setUrlStats(null); // Clear previous stats when input changes
-            }}
+            onChange={(e) => handleInputChange(e.target.value)}
             disabled={isLoading}
             placeholder={`e.g., ${APP_BASE_URL}/xYz123Abc or xYz123Abc`}
             error={!!error} // Highlight field if there's an error related to this form

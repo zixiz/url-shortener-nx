@@ -1,17 +1,19 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, IconButton, Link as MuiLink, Tooltip,
-  InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
+  InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Collapse, Fade, LinearProgress
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import SearchIcon from '@mui/icons-material/Search'; 
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppSelector } from '../store/hooks.js'; 
 import apiClient from '../lib/apiClient.js';
 import { useSnackbar } from '../context/SnackbarContext.js';
-import { useThemeMode } from '../components/ViteThemeRegistry.js'; // To get current theme mode
+import { useThemeMode } from '../components/ViteThemeRegistry.js';
 import { useTheme } from '@mui/material/styles';
 
 interface CreatedUrlResponse {
@@ -31,6 +33,7 @@ interface AnonymousLink {
 
 const MAX_ANONYMOUS_LINKS = 5;
 const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
+const AUTO_HIDE_DURATION = 10000;
 
 // Image URL from the Stitch example - ENSURE YOU HAVE RIGHTS TO USE OR REPLACE
 const HERO_IMAGE_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuC5oYzQi-XEkOhBaLGMWgGitAnx3gRVoqWT098YNvzmwhSvI4AWSJnk4FymirDetf-TBGRvO0KY0l7GzLNv70NYcKLFWDSWMqMqbd8VySlbFads8r3AWJGgU7UTAKsuq_RVYD_aR-ivg69UqK2Woe79CfeW0Hlzfj52JSx-lavobiO6salvSj5OpTQ8xsJb2sNa6dbJvrMXYMFD-z5iw2Y3L8Lzn8a9OWmGWvN3hnQIpMczakixWwnEOnO1iMV1NbLD3bW_A5mE8tQ";
@@ -39,11 +42,16 @@ export default function HomePage() {
   const theme = useTheme();
   const [longUrl, setLongUrl] = useState('');
   const [createdUrl, setCreatedUrl] = useState<CreatedUrlResponse | null>(null);
+  const [showCreatedUrl, setShowCreatedUrl] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false); 
   const [formError, setFormError] = useState<string | null>(null);
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
+  const [progress, setProgress] = useState(100);
+  
   const { showSnackbar } = useSnackbar();
   const { mode } = useThemeMode(); 
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
@@ -61,11 +69,64 @@ export default function HomePage() {
     }
   }, []);
 
+  // Auto-hide effect for created URL
+  useEffect(() => {
+    if (createdUrl && showCreatedUrl) {
+      // Clear any existing timers
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+      // Reset progress
+      setProgress(100);
+
+      // Start progress countdown
+      const progressStep = 100 / (AUTO_HIDE_DURATION / 100);
+      progressIntervalRef.current = setInterval(() => {
+        setProgress(prev => {
+          const newProgress = prev - progressStep;
+          return newProgress <= 0 ? 0 : newProgress;
+        });
+      }, 100);
+
+      // Set hide timeout
+      hideTimeoutRef.current = setTimeout(() => {
+        setShowCreatedUrl(false);
+        // Clear created URL after fade animation completes
+        setTimeout(() => {
+          setCreatedUrl(null);
+          setProgress(100);
+        }, 300); // Match with Collapse exit duration
+      }, AUTO_HIDE_DURATION);
+    }
+
+    // Cleanup on unmount or when createdUrl changes
+    return () => {
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, [createdUrl, showCreatedUrl]);
+
+  const handleManualClose = () => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    
+    setShowCreatedUrl(false);
+    setTimeout(() => {
+      setCreatedUrl(null);
+      setProgress(100);
+    }, 300);
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsFormLoading(true);
     setFormError(null);
-    setCreatedUrl(null);
+    
+    // Hide current URL display if showing
+    if (showCreatedUrl) {
+      setShowCreatedUrl(false);
+      setTimeout(() => setCreatedUrl(null), 300);
+    }
 
     if (!longUrl.trim()) {
         setFormError("Please enter a URL to shorten.");
@@ -76,6 +137,7 @@ export default function HomePage() {
     try {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
       setCreatedUrl(response.data);
+      setShowCreatedUrl(true);
       showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 });
 
       if (!authenticatedUser && response.data) {
@@ -122,7 +184,7 @@ export default function HomePage() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}> {/* Root container for page background */}
+    <Box sx={{ flexGrow: 1 }}>
       <Container maxWidth="lg" sx={{pt: {xs: 0, md: 0}, pb: 4, px: {xs: 0, sm: 2} }}>
         
         {/* Hero Section */}
@@ -246,79 +308,138 @@ export default function HomePage() {
               {isFormLoading ? <CircularProgress size={24} color="inherit" /> : 'Shorten'}
             </Button>
           </Box>
-        </Box> {/* End of Hero Section Box */}
+        </Box>
         
         {/* Form Error Display */}
         {formError && (
           <Alert severity="error" sx={{ mb: 3, mt: 2 }}>{formError}</Alert>
         )}
 
-        {/* Created URL Display - THEMED */}
-        {createdUrl && (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              p: 3, 
-              mb: 4, 
-              // Theme-aware background
-              bgcolor: theme.palette.mode === 'light' ? 'primary.light' : theme.palette.action.selected,
-              borderRadius: '8px', 
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              gutterBottom 
-              sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.primary' }}
-            >
-              Your Shortened URL:
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <MuiLink 
-                href={createdUrl.fullShortUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                sx={{ 
-                  fontWeight: 'bold', 
-                  wordBreak: 'break-all',
-                  color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' 
-                }}
-              >
-                {createdUrl.fullShortUrl}
-              </MuiLink>
-              <Tooltip title="Copy Short URL">
-                <IconButton 
-                  onClick={() => handleCopyToClipboard(createdUrl.fullShortUrl)} 
-                  size="small" 
-                  sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-               <Tooltip title="Open Short URL">
-                 <IconButton 
-                  component="a" 
-                  href={createdUrl.fullShortUrl} 
-                  target="_blank" rel="noopener noreferrer" 
-                  size="small" 
-                  sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
-                >
-                  <OpenInNewIcon fontSize="small"/>
-                </IconButton>
-              </Tooltip>
-            </Box>
-            <Typography 
-              variant="caption" 
-              display="block" 
+        {/* Created URL Display with Auto-Hide */}
+        <Collapse in={showCreatedUrl} timeout={300}>
+          <Fade in={showCreatedUrl} timeout={300}>
+            <Paper 
+              elevation={3} 
               sx={{ 
-                mt: 1, 
-                wordBreak: 'break-all', 
-                color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.secondary'
+                p: 3, 
+                mb: 4,
+                position: 'relative',
+                overflow: 'hidden',
+                bgcolor: theme.palette.mode === 'light' ? 'primary.light' : theme.palette.action.selected,
+                borderRadius: '8px',
+                border: `1px solid ${theme.palette.mode === 'light' ? theme.palette.primary.main : theme.palette.divider}`,
               }}
             >
-              Original: {createdUrl.longUrl}
-            </Typography>
-          </Paper>
-        )}
+              {/* Progress bar at the top */}
+              <LinearProgress
+                variant="determinate"
+                value={progress}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  backgroundColor: theme.palette.mode === 'light' ? 'primary.lighter' : 'action.hover',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: theme.palette.mode === 'light' ? 'primary.main' : 'primary.light',
+                  }
+                }}
+              />
+              
+              {/* Close button */}
+              <IconButton
+                onClick={handleManualClose}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.secondary',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'light' ? 'primary.dark' : 'action.hover',
+                    color: theme.palette.mode === 'light' ? 'primary.light' : 'text.primary',
+                  }
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  color: theme.palette.mode === 'light' ? 'primary.dark' : 'text.primary',
+                  pr: 5 // Make room for close button
+                }}
+              >
+                Your Shortened URL:
+              </Typography>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <MuiLink 
+                  href={createdUrl?.fullShortUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    wordBreak: 'break-all',
+                    color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' 
+                  }}
+                >
+                  {createdUrl?.fullShortUrl}
+                </MuiLink>
+                <Tooltip title="Copy Short URL">
+                  <IconButton 
+                    onClick={() => createdUrl && handleCopyToClipboard(createdUrl.fullShortUrl)} 
+                    size="small" 
+                    sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Open Short URL">
+                  <IconButton 
+                    component="a" 
+                    href={createdUrl?.fullShortUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    size="small" 
+                    sx={{ color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light' }}
+                  >
+                    <OpenInNewIcon fontSize="small"/>
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              
+              <Typography 
+                variant="caption" 
+                display="block" 
+                sx={{ 
+                  mt: 1, 
+                  wordBreak: 'break-all', 
+                  color: theme.palette.mode === 'light' ? 'primary.dark' : 'primary.light'
+                }}
+              >
+                Original: {createdUrl?.longUrl}
+              </Typography>
+              
+              {/* Auto-hide indicator */}
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 12,
+                  color: theme.palette.mode === 'light' ? 'primary.main' : 'text.disabled',
+                  opacity: 0.7
+                }}
+              >
+                Auto-hiding in {Math.ceil(progress / 10)}s
+              </Typography>
+            </Paper>
+          </Fade>
+        </Collapse>
 
         {/* Anonymous Links Section */}
         {isInitialAuthChecked && !authenticatedUser && anonymousLinks.length > 0 && (
@@ -329,11 +450,10 @@ export default function HomePage() {
             <TableContainer component={Paper} elevation={1} sx={{
               border: 1, 
               borderColor: 'divider', 
-              borderRadius: '12px', // Apply border radius to TableContainer
-              // overflow: 'hidden', // Already handled by TableContainer
+              borderRadius: '12px',
             }}>
-              <Table sx={{ minWidth: 650 /* Adjust as needed for content */ }} aria-label="recently shortened urls">
-                <TableHead sx={{ bgcolor: theme.palette.action.hover /* Header background */ }}>
+              <Table sx={{ minWidth: 650 }} aria-label="recently shortened urls">
+                <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'medium', width: '40%' }}>Original URL</TableCell>
                     <TableCell sx={{ fontWeight: 'medium', width: '35%' }}>Shortened URL</TableCell>
@@ -351,7 +471,7 @@ export default function HomePage() {
                         scope="row"
                         sx={{ 
                           wordBreak: 'break-all', 
-                          maxWidth: '300px', // Control max width before ellipsis
+                          maxWidth: '300px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap'
@@ -370,7 +490,7 @@ export default function HomePage() {
                           {link.fullShortUrl}
                         </MuiLink>
                       </TableCell>
-                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr:1 /* Adjust padding for icons */ }}>
+                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr:1 }}>
                         <Tooltip title="Copy Short URL">
                           <IconButton size="small" onClick={() => handleCopyToClipboard(link.fullShortUrl)}>
                             <ContentCopyIcon fontSize="small" />
