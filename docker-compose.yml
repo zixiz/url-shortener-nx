@@ -69,6 +69,7 @@ services:
       - ./apps/management-service/.env
     environment:
       NODE_ENV: production
+      DB_SYNCHRONIZE: false
       PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}
       DATABASE_URL: postgresql://${DB_USER:-urlshorteneruser}:${DB_PASSWORD:-urlshortenerpass}@postgres_main:${DB_PORT_INTERNAL:-5432}/${DB_NAME:-url_shortener_db}
       REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379} 
