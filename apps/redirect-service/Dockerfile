@@ -11,7 +11,6 @@ COPY apps/redirect-service/package.json ./apps/redirect-service/package.json
 COPY apps/redirect-service/tsconfig.json ./apps/redirect-service/tsconfig.json
 COPY apps/redirect-service/tsconfig.app.json ./apps/redirect-service/tsconfig.app.json
 COPY apps/redirect-service/src ./apps/redirect-service/src
-# COPY libs/shared ./libs/shared # If needed
 
 RUN npm install
 ENV NX_DAEMON=false 

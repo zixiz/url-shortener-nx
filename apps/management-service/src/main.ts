@@ -13,6 +13,30 @@ import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import { startClickEventConsumer } from './rabbitmq-click-consumer.js'; 
 
+async function connectToDatabaseWithRetry(retries = 5, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+      logger.info('Management Service: Database connected successfully.');
+      return; // Success
+    } catch (error: any) {
+      logger.error(`Management Service: Error connecting to DB (attempt ${i + 1}/${retries})`, { 
+        errorMessage: error.message, 
+        errorCode: error.code, // e.g., ECONNREFUSED, ETIMEDOUT
+        errorStack: error.stack, // Full stack trace
+        service: "management-service" // Your existing metadata
+      });
+      if (i === retries - 1) {
+        logger.error('Management Service: Max DB connection retries reached. Exiting.');
+        throw error; 
+      }
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+}
+
 async function bootstrap() {
   const app = express();
 
@@ -29,11 +53,15 @@ async function bootstrap() {
   app.use(express.json());
 
   try {
-    await AppDataSource.initialize();
-    logger.info('Management Service: Database connected successfully.');
-  } catch (error) {
-    logger.error('Management Service: Error connecting to the database', error);
-    process.exit(1);
+    await connectToDatabaseWithRetry();
+
+    logger.info('Management Service: Running database migrations...');
+    await AppDataSource.runMigrations();
+    logger.info('Management Service: Database migrations completed successfully.');
+
+  } catch (dbError) {
+    logger.error('Management Service: FAILED TO INITIALIZE OR MIGRATE DATABASE. EXITING.');
+    process.exit(1); 
   }
 
   try {
