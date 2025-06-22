@@ -134,7 +134,6 @@ This is the easiest way to get the entire application stack running with default
     From the workspace root:
 
     ```bash
-    docker-compose build # Build images (only needed the first time or after Dockerfile changes)
     docker-compose up -d   # Start all services in detached mode
     ```
 
@@ -142,6 +141,7 @@ This is the easiest way to get the entire application stack running with default
 
     - **Client App (Frontend):** `http://localhost:4200` (or the `CLIENT_APP_HOST_PORT` you set in the root `.env`)
     - **Management Service API:** `http://localhost:3001` (or `MANAGEMENT_SERVICE_HOST_PORT`)
+    - **Redirect Service:** `http://localhost:3003` (or `REDIRECT_SERVICE_HOST_PORT`)
     - **Redirect Service:** `http://localhost:3003` (or `REDIRECT_SERVICE_HOST_PORT`)
     - **RabbitMQ Management UI:** `http://localhost:15672` (user: `guest`, pass: `guest`)
 
