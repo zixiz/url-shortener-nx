@@ -16,11 +16,6 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const entitiesPath = [path.join(__dirname, 'entities', '*.entity.{ts,js}')];
 const migrationsPath = [path.join(__dirname, 'migrations', '*.{ts,js}')];
 
-console.log("DATA_SOURCE.TS: Initial process.env.DATABASE_URL:", process.env.DATABASE_URL);
-console.log("DATA_SOURCE.TS: Initial process.env.DB_HOST_CLI:", process.env.DB_HOST_CLI);
-console.log("DATA_SOURCE.TS: Initial process.env.NODE_ENV:", process.env.NODE_ENV);
-console.log("DATA_SOURCE.TS: Initial process.env.DB_SYNCHRONIZE:", process.env.DB_SYNCHRONIZE);
-
 
 let connectionOptions: DataSourceOptions;
 

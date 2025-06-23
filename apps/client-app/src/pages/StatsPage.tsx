@@ -4,6 +4,7 @@ import {
   CircularProgress, Alert, Card, CardContent 
 } from '@mui/material';
 import apiClient from '../lib/apiClient.js'; 
+import AuthGuard from '../components/AuthGuard.js';
 
 interface UrlStats {
   shortId: string;
@@ -165,5 +166,13 @@ export default function StatsPage() {
         </Card>
       )}
     </Container>
+  );
+}
+
+export function ProtectedStatsPage() {
+  return (
+    <AuthGuard>
+      <StatsPage />
+    </AuthGuard>
   );
 }

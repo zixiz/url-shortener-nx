@@ -7,7 +7,6 @@ import cors from 'cors';
 import { AppDataSource } from './data-source.js'; 
 import { logger } from './config/logger.js';
 import { connectRabbitMQ } from './config/rabbitmq.js';
-import { connectRedis } from './config/redis.js';
 import authRoutes from './routes/auth.routes.js';
 import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
@@ -76,13 +75,6 @@ async function bootstrap() {
     logger.info('Management Service: Click event consumer started successfully.');
   } catch (error) {
     logger.error('Management Service: Error starting click event consumer', error);
-  }
-
-  try {
-    connectRedis();
-    logger.info('Management Service: Redis client initialized.');
-  } catch (error) {
-    logger.error('Management Service: Error initializing Redis client', error);
   }
 
   app.use('/api/auth', authRoutes);

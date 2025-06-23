@@ -23,7 +23,11 @@ export function App() {
               <MyUrlsPage />
             </AuthGuard>
             } />
-          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/stats" element={
+            <AuthGuard>
+              <StatsPage />
+            </AuthGuard>
+          } />
           
           <Route path="/404" element={<NotFoundPage />} />
           {/* Navigate to /404 for any unmatched route */}

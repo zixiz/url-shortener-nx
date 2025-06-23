@@ -29,7 +29,6 @@ const NAV_ITEMS_PUBLIC = [
   { text: 'Home', href: '/' },
   { text: 'Login', href: '/login' },
   { text: 'Register', href: '/register' },
-  { text: 'Stats', href: '/stats' },
 ];
 
 const NAV_ITEMS_AUTHENTICATED = [
@@ -50,15 +49,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isAuthenticated = !!user; 
 
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // This useEffect in ThemeRegistry is primary for dispatching initialAuthCheckCompleted.
-  // This can be a safeguard or removed if ThemeRegistry handles it reliably.
-  // useEffect(() => {
-  //     if(!isInitialAuthChecked && typeof window !== 'undefined') { // Check window for client-side only
-  //         // console.log("MainLayout: isInitialAuthChecked is false, dispatching initialAuthCheckCompleted");
-  //         // dispatch(initialAuthCheckCompleted()); // Dispatching from ThemeRegistry is likely sufficient and better
-  //     }
-  //   }, [dispatch, isInitialAuthChecked]);
 
 
   const handleLogout = () => {
