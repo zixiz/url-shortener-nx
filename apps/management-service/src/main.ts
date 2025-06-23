@@ -5,8 +5,8 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import { AppDataSource } from './data-source.js'; 
-import { logger } from './config/logger.js';    
-import { connectRabbitMQ } from './config/rabbitmq.js'; 
+import { logger } from './config/logger.js';
+import { connectRabbitMQ } from './config/rabbitmq.js';
 import { connectRedis } from './config/redis.js';
 import authRoutes from './routes/auth.routes.js';
 import urlRoutes from './routes/url.routes.js';
@@ -20,13 +20,13 @@ async function connectToDatabaseWithRetry(retries = 5, delay = 3000) {
         await AppDataSource.initialize();
       }
       logger.info('Management Service: Database connected successfully.');
-      return; // Success
+      return;
     } catch (error: any) {
       logger.error(`Management Service: Error connecting to DB (attempt ${i + 1}/${retries})`, { 
         errorMessage: error.message, 
-        errorCode: error.code, // e.g., ECONNREFUSED, ETIMEDOUT
-        errorStack: error.stack, // Full stack trace
-        service: "management-service" // Your existing metadata
+        errorCode: error.code, 
+        errorStack: error.stack,
+        service: "management-service"
       });
       if (i === retries - 1) {
         logger.error('Management Service: Max DB connection retries reached. Exiting.');
