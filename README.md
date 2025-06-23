@@ -44,7 +44,7 @@ The application follows a 3-service architecture:
 - Shortening of long URLs to unique, 11-character IDs (using `nanoid`).
 - Redirection from short URLs to original long URLs.
 - Asynchronous click tracking for short URLs, persisted in PostgreSQL.
-- Publicly accessible click statistics for any short URL.
+- Authenticated, user-specific click statistics: Only logged-in users can view stats for the short URLs they have created. Stats for other users’ URLs are not accessible.
 - "My URLs" page for authenticated users to view their created links.
 - "My Recent Anonymous Links" (max 5) stored in browser `localStorage` for non-authenticated users.
 - Dark/Light mode with `localStorage` persistence.
