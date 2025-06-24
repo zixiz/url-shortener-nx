@@ -42,8 +42,9 @@ interface AnonymousLink {
 const MAX_ANONYMOUS_LINKS = 5;
 const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
 const AUTO_HIDE_DURATION = 10000;
+const AUTO_HIDE_ERROR_DURATION = 8000;
 
-// Image URL from the Stitch example - ENSURE YOU HAVE RIGHTS TO USE OR REPLACE
+// Image URL from the Stitch example 
 const HERO_IMAGE_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuC5oYzQi-XEkOhBaLGMWgGitAnx3gRVoqWT098YNvzmwhSvI4AWSJnk4FymirDetf-TBGRvO0KY0l7GzLNv70NYcKLFWDSWMqMqbd8VySlbFads8r3AWJGgU7UTAKsuq_RVYD_aR-ivg69UqK2Woe79CfeW0Hlzfj52JSx-lavobiO6salvSj5OpTQ8xsJb2sNa6dbJvrMXYMFD-z5iw2Y3L8Lzn8a9OWmGWvN3hnQIpMczakixWwnEOnO1iMV1NbLD3bW_A5mE8tQ";
 
 export default function HomePage() {
@@ -70,6 +71,7 @@ export default function HomePage() {
   const { mode } = useThemeMode(); 
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const errorHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load anonymous links from localStorage
   useEffect(() => {
@@ -130,6 +132,19 @@ export default function HomePage() {
     }
   }, [isRateLimited, dispatch]);
 
+  // Auto-hide effect for error messages
+  useEffect(() => {
+    if (formError) {
+      if (errorHideTimeoutRef.current) clearTimeout(errorHideTimeoutRef.current);
+      errorHideTimeoutRef.current = setTimeout(() => {
+        dispatch(createShortUrlFailure(''));
+      }, AUTO_HIDE_ERROR_DURATION);
+    }
+    return () => {
+      if (errorHideTimeoutRef.current) clearTimeout(errorHideTimeoutRef.current);
+    };
+  }, [formError, dispatch]);
+
   const handleManualClose = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
@@ -188,8 +203,16 @@ export default function HomePage() {
       
       setLongUrl(''); 
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
+      let errorMessage = 'Failed to shorten URL. Please ensure it is a valid URL.';
+      if (err.response?.status === 429) {
+        errorMessage = 'Too many requests, please try again later.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
       dispatch(createShortUrlFailure(errorMessage));
+      dispatch(hideCreatedUrl());
       console.error("Error creating short URL:", err);
     } finally {
       setIsFormLoading(false);
@@ -205,10 +228,11 @@ export default function HomePage() {
       });
   };
   
+  // Cleanup feedback and error state when HomePage unmounts
   useEffect(() => {
-    // Cleanup feedback state when HomePage unmounts (e.g., on navigation)
     return () => {
       dispatch(hideCreatedUrl());
+      dispatch(createShortUrlFailure(''));
     };
   }, [dispatch]);
 
