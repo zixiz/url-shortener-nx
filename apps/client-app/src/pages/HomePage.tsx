@@ -10,11 +10,19 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { useAppSelector } from '../store/hooks.js'; 
+import { useAppSelector, useAppDispatch } from '../store/hooks.js'; 
 import apiClient from '../lib/apiClient.js';
 import { useSnackbar } from '../context/SnackbarContext.js';
 import { useThemeMode } from '../components/ViteThemeRegistry.js';
 import { useTheme } from '@mui/material/styles';
+import {
+  createShortUrlRequest,
+  createShortUrlSuccess,
+  createShortUrlFailure,
+  hideCreatedUrl,
+  updateShortenTimestamps,
+  clearRateLimit,
+} from '../store/shortenUrlSlice.js';
 
 interface CreatedUrlResponse {
   id: string;
@@ -40,21 +48,30 @@ const HERO_IMAGE_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuC5oY
 
 export default function HomePage() {
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+  
+  // Local state for form and UI
   const [longUrl, setLongUrl] = useState('');
-  const [createdUrl, setCreatedUrl] = useState<CreatedUrlResponse | null>(null);
-  const [showCreatedUrl, setShowCreatedUrl] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(false); 
-  const [formError, setFormError] = useState<string | null>(null);
   const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
   const [progress, setProgress] = useState(100);
+  const [createdUrlKey, setCreatedUrlKey] = useState(0);
+  
+  // Redux state
+  const { 
+    createdUrl, 
+    showCreatedUrl, 
+    isRateLimited, 
+    formError 
+  } = useAppSelector((state) => state.shortenUrl);
+  const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
   
   const { showSnackbar } = useSnackbar();
   const { mode } = useThemeMode(); 
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
-
+  // Load anonymous links from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -76,8 +93,9 @@ export default function HomePage() {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
-      // Reset progress
+      // Reset progress and increment key for animation
       setProgress(100);
+      setCreatedUrlKey(prev => prev + 1);
 
       // Start progress countdown
       const progressStep = 100 / (AUTO_HIDE_DURATION / 100);
@@ -90,12 +108,8 @@ export default function HomePage() {
 
       // Set hide timeout
       hideTimeoutRef.current = setTimeout(() => {
-        setShowCreatedUrl(false);
-        // Clear created URL after fade animation completes
-        setTimeout(() => {
-          setCreatedUrl(null);
-          setProgress(100);
-        }, 300); // Match with Collapse exit duration
+        dispatch(hideCreatedUrl());
+        setProgress(100);
       }, AUTO_HIDE_DURATION);
     }
 
@@ -104,42 +118,57 @@ export default function HomePage() {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [createdUrl, showCreatedUrl]);
+  }, [createdUrl, showCreatedUrl, dispatch]);
+
+  // Clear rate limit after some time
+  useEffect(() => {
+    if (isRateLimited) {
+      const timer = setTimeout(() => {
+        dispatch(clearRateLimit());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isRateLimited, dispatch]);
 
   const handleManualClose = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     
-    setShowCreatedUrl(false);
-    setTimeout(() => {
-      setCreatedUrl(null);
-      setProgress(100);
-    }, 300);
+    dispatch(hideCreatedUrl());
+    setProgress(100);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsFormLoading(true);
-    setFormError(null);
     
-    // Hide current URL display if showing
-    if (showCreatedUrl) {
-      setShowCreatedUrl(false);
-      setTimeout(() => setCreatedUrl(null), 300);
+    if (!longUrl.trim()) {
+      dispatch(createShortUrlFailure("Please enter a URL to shorten."));
+      return;
     }
 
-    if (!longUrl.trim()) {
-        setFormError("Please enter a URL to shorten.");
-        setIsFormLoading(false);
-        return;
+    // Check rate limiting
+    const now = Date.now();
+    dispatch(updateShortenTimestamps(now));
+    
+    // If rate limited after timestamp update, don't proceed
+    if (isRateLimited) {
+      return;
     }
+
+    setIsFormLoading(true);
+    dispatch(createShortUrlRequest());
+    
+    // Clear any existing timers before starting new ones
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
     try {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
-      setCreatedUrl(response.data);
-      setShowCreatedUrl(true);
+      
+      dispatch(createShortUrlSuccess(response.data));
       showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 });
 
+      // Handle anonymous links storage
       if (!authenticatedUser && response.data) {
         const newLink: AnonymousLink = {
           shortId: response.data.shortId,
@@ -156,10 +185,11 @@ export default function HomePage() {
           return updatedLinks;
         });
       }
+      
       setLongUrl(''); 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
-      setFormError(errorMessage); 
+      dispatch(createShortUrlFailure(errorMessage));
       console.error("Error creating short URL:", err);
     } finally {
       setIsFormLoading(false);
@@ -175,6 +205,13 @@ export default function HomePage() {
       });
   };
   
+  useEffect(() => {
+    // Cleanup feedback state when HomePage unmounts (e.g., on navigation)
+    return () => {
+      dispatch(hideCreatedUrl());
+    };
+  }, [dispatch]);
+
   if (!isInitialAuthChecked) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 200px)' }}>
@@ -258,9 +295,12 @@ export default function HomePage() {
               value={longUrl}
               onChange={(e) => {
                 setLongUrl(e.target.value);
-                if (formError) setFormError(null); 
+                // Clear form error when user starts typing
+                if (formError) {
+                  dispatch(clearRateLimit());
+                }
               }}
-              disabled={isFormLoading}
+              disabled={isFormLoading || isRateLimited}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start" sx={{ml:1}}>
@@ -287,7 +327,7 @@ export default function HomePage() {
               variant="contained" 
               color={mode === 'light' ? 'secondary' : 'primary'}
               size="large" 
-              disabled={isFormLoading}
+              disabled={isFormLoading || isRateLimited}
               sx={{ 
                 minWidth: {xs: '80px', sm: '100px'},
                 height: '100%',
@@ -318,8 +358,7 @@ export default function HomePage() {
         {/* Created URL Display with Auto-Hide */}
         <Collapse in={showCreatedUrl} timeout={300}>
           <Fade in={showCreatedUrl} timeout={300}>
-            <Paper 
-              elevation={3} 
+            <Paper key={createdUrlKey} elevation={3} 
               sx={{ 
                 p: 3, 
                 mb: 4,
