@@ -1,7 +1,8 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom'; 
 import { useAppSelector } from '../store/hooks.js'; 
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/authSlice';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 interface AuthGuardProps {
@@ -15,6 +16,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // Select auth state from Redux store
   const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!isInitialAuthChecked) {
@@ -26,6 +28,16 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
     }
   }, [user, token, isInitialAuthChecked, navigate, pathname]); 
+
+  useEffect(() => {
+    // If Redux thinks we're logged in, but localStorage is missing the token, force logout
+    if (user && token && typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('authToken');
+      if (!storedToken) {
+        dispatch(logout());
+      }
+    }
+  }, [user, token, dispatch, location]);
 
   if (!isInitialAuthChecked) {
     return (

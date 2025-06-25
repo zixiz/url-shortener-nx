@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { store } from '../store/store';
+import { logout } from '../store/authSlice';
 
 const MANAGEMENT_SERVICE_BASE_URL = 
   import.meta.env.VITE_MANAGEMENT_API_URL  || 'http://localhost:3001/api';
@@ -32,6 +34,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== 'undefined') {
          localStorage.removeItem('authToken');
          localStorage.removeItem('authUser');
+         store.dispatch(logout());
          console.warn('API Client: Cleared tokens due to 401 response.');
       }
       console.error('API Client: Unauthorized request or token expired.', error.response);
