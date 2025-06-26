@@ -12,7 +12,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { useAppSelector, useAppDispatch } from '../store/hooks.js'; 
 import apiClient from '../lib/apiClient.js';
-import { useSnackbar } from '../context/SnackbarContext.js';
+import { showSnackbar } from '../store/snackbarSlice';
 import { useThemeMode } from '../components/ViteThemeRegistry.js';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -67,7 +67,6 @@ export default function HomePage() {
   } = useAppSelector((state) => state.shortenUrl);
   const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
   
-  const { showSnackbar } = useSnackbar();
   const { mode } = useThemeMode(); 
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -181,7 +180,7 @@ export default function HomePage() {
       const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
       
       dispatch(createShortUrlSuccess(response.data));
-      showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 });
+      dispatch(showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 }));
 
       // Handle anonymous links storage
       if (!authenticatedUser && response.data) {
@@ -206,6 +205,7 @@ export default function HomePage() {
       let errorMessage = 'Failed to shorten URL. Please ensure it is a valid URL.';
       if (err.response?.status === 429) {
         errorMessage = 'Too many requests, please try again later.';
+        dispatch(showSnackbar({ message: errorMessage, severity: 'warning' }));
       } else if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
       } else if (err.message) {
@@ -221,10 +221,10 @@ export default function HomePage() {
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
+      .then(() => dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 })))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
-        showSnackbar({ message: 'Failed to copy URL.', severity: 'error' });
+        dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
       });
   };
   

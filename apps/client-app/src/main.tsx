@@ -8,8 +8,6 @@ import { initialAuthCheckCompleted } from './store/authSlice.js'; // Action
 
 import App from './app/app.js';                        // Default root component from Nx/Vite
 import ViteThemeRegistry from './components/ViteThemeRegistry.js'; // Your theme registry
-import { SnackbarProvider } from './context/SnackbarContext.js'; 
-
 
 import './styles.css'; // Or './styles.css', your main CSS file
 
@@ -28,10 +26,8 @@ root.render(
   <StrictMode>
     <ReduxProvider store={store}>
       <ViteThemeRegistry>
-        <SnackbarProvider> {/* <--- WRAP WITH SnackbarProvider */}
-          <AppInitializer />
-          <App /> 
-        </SnackbarProvider>
+        <AppInitializer />
+        <App />
       </ViteThemeRegistry>
     </ReduxProvider>
   </StrictMode>

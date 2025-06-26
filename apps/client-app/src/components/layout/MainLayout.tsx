@@ -24,6 +24,7 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../store/authSlice';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import ReduxSnackbar from '../ReduxSnackbar';
 
 const NAV_ITEMS_PUBLIC = [
   { text: 'Home', href: '/' },
@@ -163,6 +164,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Container component="main" sx={{ py: 3, flexGrow: 1 }}>
         {children}
       </Container>
+
+      <ReduxSnackbar />
 
       <Box
         component="footer"

@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom'; // react-router-dom imports
 import { useAppSelector, useAppDispatch } from '../store/hooks.js'; // Redux hooks
 import { registerUser, clearAuthError } from '../store/authSlice.js'; // Redux actions
-import { useSnackbar } from '../context/SnackbarContext.js';   
+import { showSnackbar } from '../store/snackbarSlice';
 import {
   Container, Box, TextField, Button, Typography,
   CircularProgress, Alert, Paper, Link as MuiLink
@@ -20,7 +20,6 @@ export default function RegisterPage() {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { showSnackbar } = useSnackbar();
 
   const { user, isLoading: isAuthApiLoading, error: authApiErrorFromSlice, isInitialAuthChecked } = useAppSelector((state) => state.auth);
 
@@ -54,7 +53,7 @@ export default function RegisterPage() {
     const resultAction = await dispatch(registerUser({ emailP: email, passwordP: password, usernameP: effectiveUsername }));
 
     if (registerUser.fulfilled.match(resultAction)) {
-      showSnackbar({ message: 'Registration successful! Please log in.', severity: 'success' });
+      dispatch(showSnackbar({ message: 'Registration successful! Please log in.', severity: 'success' }));
       navigate('/login');
     } else if (registerUser.rejected.match(resultAction)) {
       setApiPageError(resultAction.payload || "Registration failed. Please try again.");

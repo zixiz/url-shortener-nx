@@ -9,11 +9,11 @@ import {
   useTheme, useMediaQuery // Make sure useTheme is imported
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom'; // For internal navigation <MuiLink component={RouterLink} ...>
-import { useAppSelector } from '../store/hooks.js'; // Adjust path as needed
+import { useAppSelector, useAppDispatch } from '../store/hooks.js'; // Adjust path as needed
 import apiClient from '../lib/apiClient.js';      // Adjust path as needed
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useSnackbar } from '../context/SnackbarContext.js'; // Adjust path as needed
+import { showSnackbar } from '../store/snackbarSlice';
 
 interface ShortenedUrl {
   id: string;
@@ -34,7 +34,7 @@ export default function MyUrlsPage() {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoadingUrls, setIsLoadingUrls] = useState(true);
   const [errorFetchingUrls, setErrorFetchingUrls] = useState<string | null>(null);
-  const { showSnackbar } = useSnackbar();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const fetchUrls = async () => {
@@ -67,10 +67,10 @@ export default function MyUrlsPage() {
 
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }))
+      .then(() => dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 })))
       .catch(err => {
         console.error('Failed to copy to clipboard:', err);
-        showSnackbar({ message: 'Failed to copy URL.', severity: 'error' });
+        dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
       });
   };
 
