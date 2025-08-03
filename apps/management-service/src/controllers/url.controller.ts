@@ -10,17 +10,14 @@ export class UrlController {
   createShortUrl = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       let longUrl = req.body.longUrl;
-      // If missing scheme, prepend http://
       if (typeof longUrl === 'string' && !/^https?:\/\//i.test(longUrl)) {
         longUrl = 'http://' + longUrl;
       }
-      // Now validate with Joi
       const { error, value } = createUrlSchema.validate({ longUrl });
       if (error) {
         res.status(400).json({ message: error.details[0].message });
         return;
       }
-      // Use the validated longUrl
       const userId = req.user?.id || null;
       const newUrl = await urlService.createShortUrl(value.longUrl, userId);
       const appBaseUrl = process.env.APP_BASE_URL || `http://localhost:3003`;
