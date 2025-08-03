@@ -1,13 +1,13 @@
 import { useState, useMemo, createContext, useContext, useEffect, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
-import { createAppTheme } from '../theme/theme'; // Path relative to this file
+import { createAppTheme } from '../theme/theme'; 
 
 interface ThemeContextType {
   mode: PaletteMode;
   toggleColorMode: () => void;
 }
 export const ThemeModeContext = createContext<ThemeContextType | undefined>(undefined);
-export const useThemeMode = () => { /* ... (same as before) ... */ 
+export const useThemeMode = () => { 
      const context = useContext(ThemeModeContext);
      if (!context) throw new Error('useThemeMode must be used within its Provider');
      return context;

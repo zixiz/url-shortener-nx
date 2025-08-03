@@ -26,8 +26,8 @@ root.render(
   <StrictMode>
     <ReduxProvider store={store}>
       <ViteThemeRegistry>
-        <AppInitializer />
-        <App />
+          <AppInitializer />
+          <App /> 
       </ViteThemeRegistry>
     </ReduxProvider>
   </StrictMode>
