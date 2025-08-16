@@ -10,10 +10,10 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { useAppSelector, useAppDispatch } from '../store/hooks.js'; 
-import apiClient from '../lib/apiClient.js';
-import { showSnackbar } from '../store/snackbarSlice';
-import { useThemeMode } from '../components/ViteThemeRegistry.js';
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; 
+import apiClient from '../../core/lib/apiClient.js';
+import { showSnackbar } from '../../core/store/snackbarSlice';
+import { useThemeMode } from '../../theme/components/ViteThemeRegistry.js';
 import { useTheme } from '@mui/material/styles';
 import {
   createShortUrlRequest,
@@ -22,7 +22,7 @@ import {
   hideCreatedUrl,
   updateShortenTimestamps,
   clearRateLimit,
-} from '../store/shortenUrlSlice.js';
+} from '../state/shortenUrlSlice.js';
 
 interface CreatedUrlResponse {
   id: string;

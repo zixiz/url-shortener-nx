@@ -19,9 +19,9 @@ import {
   useTheme,       
   useMediaQuery
 } from '@mui/material';
-import ThemeToggleButton from '../ThemeToggleButton'; 
+import ThemeToggleButton from '../../../theme/components/ThemeToggleButton'; 
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { logout as logoutAction } from '../../store/authSlice';
+import { logout as logoutAction } from '../../../auth/state/authSlice';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import ReduxSnackbar from '../ReduxSnackbar';

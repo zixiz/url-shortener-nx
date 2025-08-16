@@ -1,6 +1,6 @@
 import { useState, useMemo, createContext, useContext, useEffect, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline, PaletteMode, useMediaQuery } from '@mui/material';
-import { createAppTheme } from '../theme/theme'; 
+import { createAppTheme } from '../theme'; 
 
 interface ThemeContextType {
   mode: PaletteMode;
@@ -12,7 +12,7 @@ export const useThemeMode = () => {
      if (!context) throw new Error('useThemeMode must be used within its Provider');
      return context;
 };
-const THEME_MODE_STORAGE_KEY = 'clientAppThemeMode'; // Use a different key for this app
+const THEME_MODE_STORAGE_KEY = 'clientAppThemeMode';
 
 export default function ViteThemeRegistry({ children }: { children: ReactNode }) {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');

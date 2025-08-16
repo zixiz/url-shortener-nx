@@ -1,7 +1,7 @@
 // apps/client-app/src/pages/MyUrlsPage.tsx
 import { useState, useEffect } from 'react';
 // Ensure AuthGuard path is correct (e.g., ../components/AuthGuard.js if MyUrlsPage is in src/pages and AuthGuard in src/components)
-import AuthGuard from '../components/AuthGuard.js'; 
+import AuthGuard from '../../auth/components/AuthGuard.js'; 
 import {
   Typography, Container, Box, Alert,
   IconButton, Tooltip, Paper, Link as MuiLink, Skeleton,
@@ -9,11 +9,11 @@ import {
   useTheme, useMediaQuery // Make sure useTheme is imported
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom'; // For internal navigation <MuiLink component={RouterLink} ...>
-import { useAppSelector, useAppDispatch } from '../store/hooks.js'; // Adjust path as needed
-import apiClient from '../lib/apiClient.js';      // Adjust path as needed
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; // Adjust path as needed
+import apiClient from '../../core/lib/apiClient.js';      // Adjust path as needed
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { showSnackbar } from '../store/snackbarSlice';
+import { showSnackbar } from '../../core/store/snackbarSlice';
 
 interface ShortenedUrl {
   id: string;

@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './authSlice'; 
-import shortenUrlReducer from './shortenUrlSlice';
+import authReducer from '../../auth/state/authSlice'; 
+import shortenUrlReducer from '../../urls/state/shortenUrlSlice';
 import snackbarReducer from './snackbarSlice';
 
 export const store = configureStore({

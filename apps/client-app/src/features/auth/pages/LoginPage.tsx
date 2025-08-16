@@ -2,8 +2,8 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom'; // Use react-router-dom
-import { useAppSelector, useAppDispatch } from '../store/hooks.js'; // Adjust path: ../store/hooks.js
-import { loginUser, clearAuthError } from '../store/authSlice.js'; 
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js';
+import { loginUser, clearAuthError } from '../state/authSlice.js'; 
 import {
   Container, Box, TextField, Button, Typography,
   CircularProgress, Alert, Paper, Link as MuiLink

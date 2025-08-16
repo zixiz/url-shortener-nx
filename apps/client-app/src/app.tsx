@@ -1,23 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import MainLayout from '../components/layout/MainLayout.js'; // Path to your MainLayout
-import AuthGuard from '../components/AuthGuard.js';
-import LoadingSpinner from '../components/LoadingSpinner.js';
+import MainLayout from './features/core/components/layout/MainLayout.js';
+import AuthGuard from './features/auth/components/AuthGuard.js';
+import LoadingSpinner from '../src/features/core/components/LoadingSpinner.js';
 
-// Eagerly load the main pages
-import HomePage from '../pages/HomePage.js';
-import NotFoundPage from '../pages/NotFoundPage.js'; 
 
-// Lazy load other pages
-const LoginPage = lazy(() => import('../pages/LoginPage.js'));
-const RegisterPage = lazy(() => import('../pages/RegisterPage.js'));
-const MyUrlsPage = lazy(() => import('../pages/MyUrlsPage.js'));
-const StatsPage = lazy(() => import('../pages/StatsPage.js'));
+import HomePage from './features/urls/pages/HomePage.js';
+import NotFoundPage from './features/core/pages/NotFoundPage.js'; 
+
+const LoginPage = lazy(() => import('./features/auth/pages/LoginPage.js'));
+const RegisterPage = lazy(() => import('./features/auth/pages/RegisterPage.js'));
+const MyUrlsPage = lazy(() => import('./features/urls/pages/MyUrlsPage.js'));
+const StatsPage = lazy(() => import('./features/stats/pages/StatsPage.js'));
 
 export function App() {
   return (
     <BrowserRouter>
-      <MainLayout> {/* MainLayout now wraps all routed content */}
+      <MainLayout>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<HomePage />} />

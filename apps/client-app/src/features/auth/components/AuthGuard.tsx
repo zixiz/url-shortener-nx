@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom'; 
-import { useAppSelector } from '../store/hooks.js'; 
+import { useAppSelector } from '../../core/store/hooks.js'; 
 import { useDispatch } from 'react-redux';
-import { logout } from '../store/authSlice';
+import { logout } from '../state/authSlice';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
 interface AuthGuardProps {

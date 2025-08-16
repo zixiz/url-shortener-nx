@@ -3,8 +3,8 @@ import {
   Container, Box, TextField, Button, Typography, Paper,
   CircularProgress, Alert, Card, CardContent 
 } from '@mui/material';
-import apiClient from '../lib/apiClient.js'; 
-import AuthGuard from '../components/AuthGuard.js';
+import apiClient from '../../core/lib/apiClient.js'; 
+import AuthGuard from '../../auth/components/AuthGuard.js';
 
 interface UrlStats {
   shortId: string;

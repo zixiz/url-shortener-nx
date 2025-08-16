@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { store } from '../store/store';
-import { logout } from '../store/authSlice';
+import { logout } from '../../auth/state/authSlice';
 
 const MANAGEMENT_SERVICE_BASE_URL = 
   import.meta.env.VITE_MANAGEMENT_API_URL  || 'http://localhost:3001/api';

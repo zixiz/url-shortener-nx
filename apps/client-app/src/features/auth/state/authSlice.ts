@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import apiClient from '../lib/apiClient'; 
+import apiClient from '../../core/lib/apiClient'; 
 
-// Define types
 interface User {
   id: string;
   email: string;
@@ -58,11 +57,10 @@ const getInitialAuthState = (): AuthState => {
 
 const initialState: AuthState = getInitialAuthState();
 
-// Async Thunk for Login
 export const loginUser = createAsyncThunk<
   AuthResponseData,
-  { emailP: string; passwordP: string }, // Type for the arguments passed to the thunk
-  { rejectValue: string } // Type for the value returned on rejection
+  { emailP: string; passwordP: string },
+  { rejectValue: string }
 >(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
@@ -82,9 +80,8 @@ export const loginUser = createAsyncThunk<
   }
 );
 
-// Async Thunk for Registration
 export const registerUser = createAsyncThunk<
-  RegisterResponseData, // Type for successful return
+  RegisterResponseData,
   { emailP: string; passwordP: string; usernameP?: string },
   { rejectValue: string }
 >(
@@ -106,7 +103,6 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Reducer for manual logout
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -117,10 +113,8 @@ const authSlice = createSlice({
         localStorage.removeItem(AUTH_USER_KEY);
       }
     },
-    // Reducer to mark initial auth check as complete
     initialAuthCheckCompleted: (state) => {
         state.isInitialAuthChecked = true;
-        // If after check, user/token are still null, ensure isLoading is false
         if (!state.user || !state.token) {
             state.isLoading = false; 
         }
@@ -131,7 +125,6 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Login User
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -152,7 +145,6 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
       })
-      // Register User
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;

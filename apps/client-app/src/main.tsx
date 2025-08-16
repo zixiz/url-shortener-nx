@@ -1,15 +1,14 @@
-// apps/client-app/src/main.tsx
-import { StrictMode, useEffect } from 'react'; // Added useEffect
+import { StrictMode, useEffect } from 'react';
 import * as ReactDOM from 'react-dom/client';
 
-import { Provider as ReduxProvider } from 'react-redux'; // Redux Provider
-import { store } from './store/store.js';                // Your Redux store
-import { initialAuthCheckCompleted } from './store/authSlice.js'; // Action
+import { Provider as ReduxProvider } from 'react-redux';
+import { store } from './features/core/store/store.js';
+import { initialAuthCheckCompleted } from './features/auth/state/authSlice.js';
 
-import App from './app/app.js';                        // Default root component from Nx/Vite
-import ViteThemeRegistry from './components/ViteThemeRegistry.js'; // Your theme registry
+import App from './app.js';
+import ViteThemeRegistry from './features/theme/components/ViteThemeRegistry.js';
 
-import './styles.css'; // Or './styles.css', your main CSS file
+import './styles.css';
 
 const AppInitializer = () => {
   const dispatch = store.dispatch;

@@ -7,7 +7,7 @@ export default function LoadingSpinner() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: 'calc(100vh - 200px)', // Adjust height as needed
+        minHeight: 'calc(100vh - 200px)',
       }}
     >
       <CircularProgress />

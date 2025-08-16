@@ -2,9 +2,9 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom'; // react-router-dom imports
-import { useAppSelector, useAppDispatch } from '../store/hooks.js'; // Redux hooks
-import { registerUser, clearAuthError } from '../store/authSlice.js'; // Redux actions
-import { showSnackbar } from '../store/snackbarSlice';
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js';
+import { registerUser, clearAuthError } from '../state/authSlice.js';
+import { showSnackbar } from '../../core/store/snackbarSlice';
 import {
   Container, Box, TextField, Button, Typography,
   CircularProgress, Alert, Paper, Link as MuiLink
