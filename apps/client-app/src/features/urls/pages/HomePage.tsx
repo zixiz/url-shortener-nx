@@ -191,13 +191,20 @@ export default function HomePage() {
           createdAt: Date.now(),
         };
         
-        setAnonymousLinks(prevLinks => {
-          const updatedLinks = [newLink, ...prevLinks].slice(0, MAX_ANONYMOUS_LINKS);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(ANONYMOUS_LINKS_STORAGE_KEY, JSON.stringify(updatedLinks));
-          }
-          return updatedLinks;
-        });
+        const updatedLinks = [newLink, ...anonymousLinks].slice(0, MAX_ANONYMOUS_LINKS);
+        setAnonymousLinks(updatedLinks);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(ANONYMOUS_LINKS_STORAGE_KEY, JSON.stringify(updatedLinks));
+        }
+
+        if (updatedLinks.length >= MAX_ANONYMOUS_LINKS) {
+          dispatch(showSnackbar({ 
+            message: 'Want to save more than 5 links? Register for a free account!',
+            severity: 'info',
+            duration: 6000 
+          }));
+        }
       }
       
       setLongUrl(''); 
