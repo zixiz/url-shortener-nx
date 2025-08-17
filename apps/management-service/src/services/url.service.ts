@@ -10,6 +10,9 @@ import { logger } from '../config/logger.js';
 
 const SHORT_ID_LENGTH = 11;
 const RABBITMQ_NEW_URL_QUEUE = process.env.RABBITMQ_NEW_URL_QUEUE || 'new_url_queue';
+const RABBITMQ_URL_DELETED_QUEUE = process.env.RABBITMQ_URL_DELETED_QUEUE || 'url_deleted_queue';
+
+export type DeleteUrlResult = 'SUCCESS' | 'NOT_FOUND' | 'FORBIDDEN';
 
 export class UrlService {
   private urlRepository = AppDataSource.getRepository(Url);
@@ -79,5 +82,59 @@ export class UrlService {
    */
   async getUrlStats(shortId: string, userId: string): Promise<Url | null> {
     return this.urlRepository.findOneBy({ shortId, userId });
+  }
+
+  /**
+   * Deletes a URL, checking for ownership.
+   */
+  async deleteUrl(shortId: string, userId: string): Promise<DeleteUrlResult> {
+    const urlToDelete = await this.urlRepository.findOne({ where: { shortId } });
+
+    if (!urlToDelete) {
+      logger.warn('Delete attempt for a URL that does not exist.', { shortId, userId });
+      return 'NOT_FOUND';
+    }
+
+    if (urlToDelete.userId !== userId) {
+      logger.warn('Permission denied. User attempted to delete a URL they do not own.', { 
+        shortId, 
+        ownerUserId: urlToDelete.userId, 
+        attemptedUserId: userId 
+      });
+      return 'FORBIDDEN';
+    }
+
+    await this.urlRepository.remove(urlToDelete);
+    logger.info('Successfully deleted URL from database.', { shortId, userId });
+
+    // Asynchronously publish the deletion event
+    this.publishUrlDeletedToQueue(shortId).catch(err => {
+        // Log the error but don't let it block the response
+        logger.error('Failed to publish URL deletion event after successful deletion.', {error: err});
+    });
+
+    return 'SUCCESS';
+  }
+
+  /**
+   * Publishes a message to RabbitMQ to signify that a URL has been deleted.
+   */
+  private async publishUrlDeletedToQueue(shortId: string): Promise<void> {
+    try {
+      const channel = getRabbitMQChannel();
+      await channel.assertQueue(RABBITMQ_URL_DELETED_QUEUE, { durable: true });
+      channel.sendToQueue(
+        RABBITMQ_URL_DELETED_QUEUE,
+        Buffer.from(JSON.stringify({ shortId })),
+        { persistent: true }
+      );
+      logger.info('Published URL deletion event to RabbitMQ', { shortId });
+    } catch (mqError) {
+      logger.error('Failed to publish URL deletion event to RabbitMQ.', {
+        shortId,
+        error: mqError instanceof Error ? mqError.message : String(mqError),
+      });
+      throw mqError;
+    }
   }
 } 

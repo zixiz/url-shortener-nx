@@ -2,9 +2,11 @@ import amqplib from 'amqplib';
 import type { Connection, Channel, ConsumeMessage, ConfirmChannel } from 'amqplib';
 import { logger } from './config/logger.js'; 
 import { getRedisClient } from './config/redis.js';
+import { deleteUrlFromCache } from './services/url.service.js';
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const CONSUME_QUEUE_NAME = process.env.RABBITMQ_QUEUE_NAME || 'new_url_queue'; 
+const RABBITMQ_URL_DELETED_QUEUE = process.env.RABBITMQ_URL_DELETED_QUEUE || 'url_deleted_queue';
 
 let connection: Connection | null = null;
 let consumerChannel: Channel | null = null;
@@ -12,7 +14,7 @@ let publisherChannel: ConfirmChannel | null = null;
 
 let connectionPromise: Promise<void> | null = null;
 
-async function processMessage(msg: ConsumeMessage | null) {
+async function processNewUrlMessage(msg: ConsumeMessage | null) {
   if (msg === null) {
     logger.warn('Redirect Service Consumer: Received null message. Ignoring.');
     return;
@@ -53,6 +55,45 @@ async function processMessage(msg: ConsumeMessage | null) {
   }
 }
 
+async function processDeleteMessage(msg: ConsumeMessage | null) {
+  if (msg === null) {
+    logger.warn('Redirect Service Consumer: Received null delete message. Ignoring.');
+    return;
+  }
+
+  if (!consumerChannel) {
+    logger.error('Redirect Service Consumer: Consumer channel is null, cannot process delete message. Nacking and requeueing.');
+    return;
+  }
+
+  try {
+    const messageContent = msg.content.toString();
+    logger.info(`Redirect Service Consumer: Received delete message from RabbitMQ: ${messageContent}`);
+    const { shortId } = JSON.parse(messageContent);
+
+    if (!shortId) {
+      logger.warn('Redirect Service Consumer: Invalid delete message content, missing shortId.', { messageContent });
+      consumerChannel.nack(msg, false, false);
+      return;
+    }
+
+    await deleteUrlFromCache(shortId);
+    
+    consumerChannel.ack(msg);
+  } catch (error) {
+    logger.error('Redirect Service Consumer: Error processing delete message.', {
+      content: msg.content.toString(),
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    if (consumerChannel) {
+      consumerChannel.nack(msg, false, false);
+    } else {
+      logger.error('Redirect Service Consumer: Consumer channel is null, cannot NACK delete message during error handling.');
+    }
+  }
+}
+
 export async function startRabbitMQ(): Promise<void> {
   if (connectionPromise) {
     return connectionPromise;
@@ -82,10 +123,17 @@ export async function startRabbitMQ(): Promise<void> {
       if (!consumerChannel && connection) {
         consumerChannel = await connection.createChannel();
         logger.info('Redirect Service: RabbitMQ consumer channel created.');
+        
+        // Setup consumer for new URLs
         await consumerChannel.assertQueue(CONSUME_QUEUE_NAME, { durable: true });
         logger.info(`Redirect Service: Consumer waiting for messages in queue: ${CONSUME_QUEUE_NAME}.`);
         consumerChannel.prefetch(1); 
-        consumerChannel.consume(CONSUME_QUEUE_NAME, processMessage, { noAck: false });
+        consumerChannel.consume(CONSUME_QUEUE_NAME, processNewUrlMessage, { noAck: false });
+
+        // Setup consumer for deleted URLs
+        await consumerChannel.assertQueue(RABBITMQ_URL_DELETED_QUEUE, { durable: true });
+        logger.info(`Redirect Service: Consumer waiting for messages in queue: ${RABBITMQ_URL_DELETED_QUEUE}.`);
+        consumerChannel.consume(RABBITMQ_URL_DELETED_QUEUE, processDeleteMessage, { noAck: false });
       }
 
       if (!publisherChannel && connection) {

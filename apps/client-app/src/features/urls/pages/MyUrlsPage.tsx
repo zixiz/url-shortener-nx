@@ -1,18 +1,17 @@
-// apps/client-app/src/pages/MyUrlsPage.tsx
 import { useState, useEffect } from 'react';
-// Ensure AuthGuard path is correct (e.g., ../components/AuthGuard.js if MyUrlsPage is in src/pages and AuthGuard in src/components)
 import AuthGuard from '../../auth/components/AuthGuard.js'; 
 import {
   Typography, Container, Box, Alert,
   IconButton, Tooltip, Paper, Link as MuiLink, Skeleton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  useTheme, useMediaQuery // Make sure useTheme is imported
+  useTheme, useMediaQuery, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom'; // For internal navigation <MuiLink component={RouterLink} ...>
 import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; // Adjust path as needed
 import apiClient from '../../core/lib/apiClient.js';      // Adjust path as needed
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { showSnackbar } from '../../core/store/snackbarSlice';
 
 interface ShortenedUrl {
@@ -34,6 +33,8 @@ export default function MyUrlsPage() {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoadingUrls, setIsLoadingUrls] = useState(true);
   const [errorFetchingUrls, setErrorFetchingUrls] = useState<string | null>(null);
+  const [urlToDelete, setUrlToDelete] = useState<ShortenedUrl | null>(null);
+  const [isConfirmOpen, setConfirmOpen] = useState(false);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -72,6 +73,27 @@ export default function MyUrlsPage() {
         console.error('Failed to copy to clipboard:', err);
         dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
       });
+  };
+
+  const handleDeleteClick = (url: ShortenedUrl) => {
+    setUrlToDelete(url);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!urlToDelete) return;
+
+    try {
+      await apiClient.delete(`/urls/${urlToDelete.shortId}`);
+      setUrls(urls.filter(url => url.id !== urlToDelete.id));
+      dispatch(showSnackbar({ message: 'URL deleted successfully.', severity: 'success' }));
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete URL.';
+      dispatch(showSnackbar({ message: errorMessage, severity: 'error' }));
+    } finally {
+      setConfirmOpen(false);
+      setUrlToDelete(null);
+    }
   };
 
   const renderSkeletonTableRows = () => (
@@ -209,6 +231,15 @@ export default function MyUrlsPage() {
                             <OpenInNewIcon fontSize="small"/>
                           </IconButton>
                         </Tooltip>
+                        <Tooltip title="Delete URL">
+                          <IconButton
+                            sx={{p: {xs: 0.5, sm: 1}, ml: {xs: 0, sm: 0.5}}}
+                            size="small"
+                            onClick={() => handleDeleteClick(url)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))
@@ -218,6 +249,25 @@ export default function MyUrlsPage() {
           </TableContainer>
         </Box>
       </Container>
+      <Dialog
+        open={isConfirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete this URL? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AuthGuard>
   );
 }

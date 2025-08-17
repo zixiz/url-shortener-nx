@@ -83,4 +83,46 @@ export class UrlController {
       next(err);
     }
   };
+
+  deleteUrl = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+    const { shortId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized. User must be logged in to delete a URL.' });
+      return;
+    }
+
+    if (!shortId) {
+      res.status(400).json({ message: 'Bad Request: shortId parameter is required.' });
+      return;
+    }
+
+    try {
+      const result = await urlService.deleteUrl(shortId, userId);
+
+      switch (result) {
+        case 'SUCCESS':
+          res.status(204).send();
+          break;
+        case 'NOT_FOUND':
+          res.status(404).json({ message: 'URL not found.' });
+          break;
+        case 'FORBIDDEN':
+          res.status(403).json({ message: 'You do not have permission to delete this URL.' });
+          break;
+        default:
+          // This case should ideally not be reached if the service returns the expected values.
+          logger.error('Unexpected result from deleteUrl service', { result, shortId, userId });
+          next(new Error('An unexpected error occurred during URL deletion.'));
+      }
+    } catch (err) {
+      logger.error('Error during URL deletion process', { 
+        shortId, 
+        userId, 
+        error: err instanceof Error ? err.message : String(err) 
+      });
+      next(err);
+    }
+  };
 }

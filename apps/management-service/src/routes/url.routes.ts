@@ -21,5 +21,8 @@ router.post('/', urlShortenLimiter, optionalAuthenticateJWT, urlController.creat
 // GET /api/urls/mine - List URLs for authenticated user (authentication required)
 router.get('/mine', authenticateJWT, urlController.listMyUrls);
 
+// DELETE /api/urls/:shortId - Delete a URL (authentication required)
+router.delete('/:shortId', authenticateJWT, urlController.deleteUrl);
+
 
 export default router;
