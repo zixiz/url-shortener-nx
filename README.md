@@ -6,6 +6,7 @@ URL Shorty is a comprehensive application designed to shorten long URLs into man
 
 ## Table of Contents
 
+- [Live Demo](#live-demo)
 - [Architecture Overview](#architecture-overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
@@ -17,6 +18,14 @@ URL Shorty is a comprehensive application designed to shorten long URLs into man
 - [Scripts](#scripts)
 
 ---
+
+## Live Demo
+
+You can see a live demo of the project here: [http://129.159.157.229:4200/](http://129.159.157.229:4200/)
+
+---
+
+## Architecture Overview
 
 ## Architecture Overview
 
