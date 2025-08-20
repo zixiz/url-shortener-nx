@@ -227,12 +227,35 @@ export default function HomePage() {
   };
 
   const handleCopyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-      .then(() => dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 })))
-      .catch(err => {
-        console.error('Failed to copy to clipboard:', err);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 })))
+        .catch(err => {
+          console.error('Failed to copy with navigator.clipboard:', err);
+          dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
+        });
+    } else {
+      // Fallback for insecure contexts (HTTP) or older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand('copy');
+        dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }));
+      } catch (err) {
+        console.error('Fallback failed to copy to clipboard:', err);
         dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
-      });
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    }
   };
   
   // Cleanup feedback and error state when HomePage unmounts
