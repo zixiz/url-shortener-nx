@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
+import UrlActions from '../components/UrlActions';
 import AuthGuard from '../../auth/components/AuthGuard.js'; 
 import {
   Typography, Container, Box, Alert,
-  IconButton, Tooltip, Paper, Link as MuiLink, Skeleton,
+  Paper, Link as MuiLink, Skeleton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   useTheme, useMediaQuery, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom'; // For internal navigation <MuiLink component={RouterLink} ...>
-import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; // Adjust path as needed
-import apiClient from '../../core/lib/apiClient.js';      // Adjust path as needed
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Link as RouterLink } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; 
+import apiClient from '../../core/lib/apiClient.js';  
+
 import { showSnackbar } from '../../core/store/snackbarSlice';
 
 interface ShortenedUrl {
@@ -66,36 +65,7 @@ export default function MyUrlsPage() {
     }
   }, [token, user, isInitialAuthChecked]); 
 
-  const handleCopyToClipboard = (text: string) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text)
-        .then(() => dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 })))
-        .catch(err => {
-          console.error('Failed to copy with navigator.clipboard:', err);
-          dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
-        });
-    } else {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      try {
-        document.execCommand('copy');
-        dispatch(showSnackbar({ message: 'Short URL copied to clipboard!', severity: 'success', duration: 3000 }));
-      } catch (err) {
-        console.error('Fallback failed to copy to clipboard:', err);
-        dispatch(showSnackbar({ message: 'Failed to copy URL.', severity: 'error' }));
-      } finally {
-        document.body.removeChild(textArea);
-      }
-    }
-  };
+  
 
   const handleDeleteClick = (url: ShortenedUrl) => {
     setUrlToDelete(url);
@@ -236,32 +206,7 @@ export default function MyUrlsPage() {
                       )}
                       {!isMobile && <TableCell sx={{py: 1.5, px:2}}>{url.clickCount}</TableCell>}
                       <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr: {xs:1, sm:1}, py: 1.5, pl:1 }}>
-                        <Tooltip title="Copy Short URL">
-                          <IconButton sx={{p: {xs: 0.5, sm: 1}}} size="small" onClick={() => handleCopyToClipboard(url.fullShortUrl)}>
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Open Original URL">
-                          <IconButton 
-                            sx={{p: {xs: 0.5, sm: 1}, ml: {xs: 0, sm: 0.5}}}
-                            size="small" 
-                            component="a" 
-                            href={url.longUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                          >
-                            <OpenInNewIcon fontSize="small"/>
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete URL">
-                          <IconButton
-                            sx={{p: {xs: 0.5, sm: 1}, ml: {xs: 0, sm: 0.5}}}
-                            size="small"
-                            onClick={() => handleDeleteClick(url)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <UrlActions url={url} onDelete={() => handleDeleteClick(url)} />
                       </TableCell>
                     </TableRow>
                   ))

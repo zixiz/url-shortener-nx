@@ -12,6 +12,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@mui/types": "^7.4.5",
     "@nx/devkit": "21.1.2",
     "@nx/esbuild": "21.1.2",
     "@nx/js": "^21.1.2",
@@ -36,7 +37,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.0.0",
     "@types/pg": "^8.15.2",
-    "@types/react": "19.0.0",
+    "@types/react": "^19.0.0",
     "@types/react-dom": "19.0.0",
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/ui": "^3.0.0",
