@@ -1,107 +1,67 @@
 import PageHero from '../components/PageHero';
+import { useAnonymousLinks } from '../hooks/useAnonymousLinks';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import UrlActions from '../components/UrlActions';
 import LoadingIndicator from '../../core/components/LoadingIndicator';
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Container, Box, Typography, Paper,
-  IconButton, Link as MuiLink, 
+  IconButton, Link as MuiLink,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Collapse, Fade, LinearProgress, Tooltip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; 
-import apiClient from '../../core/lib/apiClient.js';
-import { showSnackbar } from '../../core/store/snackbarSlice';
+import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js';
 import { useThemeMode } from '../../theme/components/ViteThemeRegistry.js';
 import { useTheme } from '@mui/material/styles';
 import {
-  createShortUrlRequest,
-  createShortUrlSuccess,
-  createShortUrlFailure,
   hideCreatedUrl,
-  updateShortenTimestamps,
-  clearRateLimit,
+  createShortUrlFailure,
 } from '../state/shortenUrlSlice.js';
+import { useUrlShortener } from '../hooks/useUrlShortener';
 
-interface CreatedUrlResponse {
-  id: string;
-  shortId: string;
-  longUrl: string;
-  fullShortUrl: string;
-  userId?: string | null;
-}
-
-interface AnonymousLink {
-  shortId: string;
-  longUrl: string;
-  fullShortUrl: string;
-  createdAt: number; 
-}
-
-const MAX_ANONYMOUS_LINKS = 5;
-const ANONYMOUS_LINKS_STORAGE_KEY = 'anonymousUserLinks';
 const AUTO_HIDE_DURATION = 10000;
-const AUTO_HIDE_ERROR_DURATION = 8000;
-
-// Image URL from the Stitch example 
-
 
 export default function HomePage() {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const copyToClipboard = useCopyToClipboard();
-  
-  // Local state for form and UI
-  const [longUrl, setLongUrl] = useState('');
-  const [isFormLoading, setIsFormLoading] = useState(false); 
-  const [anonymousLinks, setAnonymousLinks] = useState<AnonymousLink[]>([]);
+
+  const { anonymousLinks, setAnonymousLinks } = useAnonymousLinks();
+
+  const {
+    longUrl,
+    setLongUrl,
+    isFormLoading,
+    handleSubmit,
+    isRateLimited,
+    formError,
+  } = useUrlShortener(setAnonymousLinks);
+
   const [progress, setProgress] = useState(100);
   const [createdUrlKey, setCreatedUrlKey] = useState(0);
-  
-  // Redux state
-  const { 
-    createdUrl, 
-    showCreatedUrl, 
-    isRateLimited, 
-    formError 
+
+  const {
+    createdUrl,
+    showCreatedUrl,
   } = useAppSelector((state) => state.shortenUrl);
   const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
-  
-  const { mode } = useThemeMode(); 
+
+  const { mode } = useThemeMode();
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const errorHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Load anonymous links from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedLinks = localStorage.getItem(ANONYMOUS_LINKS_STORAGE_KEY);
-        if (storedLinks) {
-          setAnonymousLinks(JSON.parse(storedLinks));
-        }
-      } catch (e) {
-        console.error("Failed to parse anonymous links from localStorage", e);
-        localStorage.removeItem(ANONYMOUS_LINKS_STORAGE_KEY);
-      }
-    }
-  }, []);
 
   // Auto-hide effect for created URL
   useEffect(() => {
     if (createdUrl && showCreatedUrl) {
-      // Clear any existing timers
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
-      // Reset progress and increment key for animation
       setProgress(100);
       setCreatedUrlKey(prev => prev + 1);
 
-      // Start progress countdown
       const progressStep = 100 / (AUTO_HIDE_DURATION / 100);
       progressIntervalRef.current = setInterval(() => {
         setProgress(prev => {
@@ -110,127 +70,26 @@ export default function HomePage() {
         });
       }, 100);
 
-      // Set hide timeout
       hideTimeoutRef.current = setTimeout(() => {
         dispatch(hideCreatedUrl());
         setProgress(100);
       }, AUTO_HIDE_DURATION);
     }
 
-    // Cleanup on unmount or when createdUrl changes
     return () => {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
   }, [createdUrl, showCreatedUrl, dispatch]);
 
-  // Clear rate limit after some time
-  useEffect(() => {
-    if (isRateLimited) {
-      const timer = setTimeout(() => {
-        dispatch(clearRateLimit());
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [isRateLimited, dispatch]);
-
-  // Auto-hide effect for error messages
-  useEffect(() => {
-    if (formError) {
-      if (errorHideTimeoutRef.current) clearTimeout(errorHideTimeoutRef.current);
-      errorHideTimeoutRef.current = setTimeout(() => {
-        dispatch(createShortUrlFailure(''));
-      }, AUTO_HIDE_ERROR_DURATION);
-    }
-    return () => {
-      if (errorHideTimeoutRef.current) clearTimeout(errorHideTimeoutRef.current);
-    };
-  }, [formError, dispatch]);
-
   const handleManualClose = () => {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    
+
     dispatch(hideCreatedUrl());
     setProgress(100);
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    
-    if (!longUrl.trim()) {
-      dispatch(createShortUrlFailure("Please enter a URL to shorten."));
-      return;
-    }
-
-    // Check rate limiting
-    const now = Date.now();
-    dispatch(updateShortenTimestamps(now));
-    
-    // If rate limited after timestamp update, don't proceed
-    if (isRateLimited) {
-      return;
-    }
-
-    setIsFormLoading(true);
-    dispatch(createShortUrlRequest());
-    
-    // Clear any existing timers before starting new ones
-    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-
-    try {
-      const response = await apiClient.post<CreatedUrlResponse>('/urls', { longUrl });
-      
-      dispatch(createShortUrlSuccess(response.data));
-      dispatch(showSnackbar({ message: 'URL Shortened Successfully!', severity: 'success', duration: 3000 }));
-
-      // Handle anonymous links storage
-      if (!authenticatedUser && response.data) {
-        const newLink: AnonymousLink = {
-          shortId: response.data.shortId,
-          longUrl: response.data.longUrl,
-          fullShortUrl: response.data.fullShortUrl,
-          createdAt: Date.now(),
-        };
-        
-        const updatedLinks = [newLink, ...anonymousLinks].slice(0, MAX_ANONYMOUS_LINKS);
-        setAnonymousLinks(updatedLinks);
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(ANONYMOUS_LINKS_STORAGE_KEY, JSON.stringify(updatedLinks));
-        }
-
-        if (updatedLinks.length >= MAX_ANONYMOUS_LINKS) {
-          dispatch(showSnackbar({ 
-            message: 'Want to save more than 5 links? Register for a free account!',
-            severity: 'info',
-            duration: 6000 
-          }));
-        }
-      }
-      
-      setLongUrl(''); 
-    } catch (err: any) {
-      let errorMessage = 'Failed to shorten URL. Please ensure it is a valid URL.';
-      if (err.response?.status === 429) {
-        errorMessage = 'Too many requests, please try again later.';
-        dispatch(showSnackbar({ message: errorMessage, severity: 'warning' }));
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      dispatch(createShortUrlFailure(errorMessage));
-      dispatch(hideCreatedUrl());
-      console.error("Error creating short URL:", err);
-    } finally {
-      setIsFormLoading(false);
-    }
-  };
-
-  
-  
   // Cleanup feedback and error state when HomePage unmounts
   useEffect(() => {
     return () => {

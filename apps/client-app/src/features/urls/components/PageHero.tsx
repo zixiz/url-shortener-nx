@@ -1,14 +1,14 @@
 
 import { Box, TextField, Button, Typography, InputAdornment, CircularProgress, Alert } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormEvent } from 'react';
+import { FormEventHandler } from 'react';
 
 const HERO_IMAGE_URL = "https://lh3.googleusercontent.com/aida-public/AB6AXuC5oYzQi-XEkOhBaLGMWgGitAnx3gRVoqWT098YNvzmwhSvI4AWSJnk4FymirDetf-TBGRvO0KY0l7GzLNv70NYcKLFWDSWMqMqbd8VySlbFads8r3AWJGgU7UTAKsuq_RVYD_aR-ivg69UqK2Woe79CfeW0Hlzfj52JSx-lavobiO6salvSj5OpTQ8xsJb2sNa6dbJvrMXYMFD-z5iw2Y3L8Lzn8a9OWmGWvN3hnQIpMczakixWwnEOnO1iMV1NbLD3bW_A5mE8tQ";
 
 interface PageHeroProps {
   longUrl: string;
   setLongUrl: (value: string) => void;
-  handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  handleSubmit: FormEventHandler<HTMLFormElement>;
   isFormLoading: boolean;
   isRateLimited: boolean;
   formError: string | null;
