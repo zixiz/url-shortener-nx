@@ -11,7 +11,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js'; 
 import apiClient from '../../core/lib/apiClient.js';  
 
-import { showSnackbar } from '../../core/store/snackbarSlice';
+import { showSnackbar } from '../../core/store/uiSlice';
 
 interface ShortenedUrl {
   id: string;
@@ -27,7 +27,8 @@ export default function MyUrlsPage() {
   const theme = useTheme(); // Hook to access the theme object for breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // True if screen width < 'sm' breakpoint
 
-  const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth); 
+  const { user, token } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui); 
 
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [isLoadingUrls, setIsLoadingUrls] = useState(true);
@@ -186,9 +187,9 @@ export default function MyUrlsPage() {
                             >
                               {url.fullShortUrl}
                             </MuiLink>
-                            <Typography component="span" variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                            <MuiLink component={RouterLink} to={`/stats?id=${url.shortId}`} sx={{ display: 'block', mt: 0.5, fontSize: '0.8rem', color: 'text.disabled', '&:hover': { textDecoration: 'underline' } }}>
                               Clicks: {url.clickCount}
-                            </Typography>
+                            </MuiLink>
                           </>
                         )}
                       </TableCell>
@@ -204,7 +205,7 @@ export default function MyUrlsPage() {
                           </MuiLink>
                         </TableCell>
                       )}
-                      {!isMobile && <TableCell sx={{py: 1.5, px:2}}>{url.clickCount}</TableCell>}
+                      {!isMobile && <TableCell sx={{py: 1.5, px:2}}><MuiLink component={RouterLink} to={`/stats?id=${url.shortId}`} sx={{ fontWeight: 'medium', color: 'primary.main', '&:hover': { textDecoration: 'underline' } }}>{url.clickCount}</MuiLink></TableCell>}
                       <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr: {xs:1, sm:1}, py: 1.5, pl:1 }}>
                         <UrlActions url={url} onDelete={() => handleDeleteClick(url)} />
                       </TableCell>

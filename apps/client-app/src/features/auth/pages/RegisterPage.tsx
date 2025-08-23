@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom'; // react-router-dom imports
 import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js';
 import { registerUser, clearAuthError } from '../state/authSlice.js';
-import { showSnackbar } from '../../core/store/snackbarSlice';
+import { showSnackbar } from '../../core/store/uiSlice';
 import LoadingIndicator from '../../core/components/LoadingIndicator';
 import AuthFormContainer from '../components/AuthFormContainer';
 import { Box, TextField, Button, CircularProgress, Alert, Typography, Link as MuiLink } from '@mui/material';
@@ -20,7 +20,8 @@ export default function RegisterPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { user, isLoading: isAuthApiLoading, error: authApiErrorFromSlice, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const { user, isLoading: isAuthApiLoading, error: authApiErrorFromSlice } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui);
 
   useEffect(() => {
     if (authApiErrorFromSlice) {

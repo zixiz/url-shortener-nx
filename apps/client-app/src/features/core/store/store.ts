@@ -1,13 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../../auth/state/authSlice'; 
+import authReducer from '../../auth/state/authSlice';
 import shortenUrlReducer from '../../urls/state/shortenUrlSlice';
-import snackbarReducer from './snackbarSlice';
+import uiReducer from './uiSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     shortenUrl: shortenUrlReducer,
-    snackbar: snackbarReducer,
+    ui: uiReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

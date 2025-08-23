@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import MainLayout from './features/core/components/layout/MainLayout.js';
 import AuthGuard from './features/auth/components/AuthGuard.js';
 import LoadingSpinner from '../src/features/core/components/LoadingSpinner.js';
+import { useAppDispatch } from './features/core/store/hooks.js';
+import { setInitialAuthChecked } from './features/core/store/uiSlice.js';
 
 
 import HomePage from './features/urls/pages/HomePage.js';
@@ -14,6 +16,12 @@ const MyUrlsPage = lazy(() => import('./features/urls/pages/MyUrlsPage.js'));
 const StatsPage = lazy(() => import('./features/stats/pages/StatsPage.js'));
 
 export function App() {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setInitialAuthChecked(true));
+  }, [dispatch]);
+
   return (
     <BrowserRouter>
       <MainLayout>

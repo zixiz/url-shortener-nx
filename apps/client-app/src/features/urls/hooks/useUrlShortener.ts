@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEventHandler } from 'react';
 import { useAppSelector, useAppDispatch } from '../../core/store/hooks';
 import apiClient from '../../core/lib/apiClient';
-import { showSnackbar } from '../../core/store/snackbarSlice';
+import { showSnackbar } from '../../core/store/uiSlice';
 import {
   createShortUrlRequest,
   createShortUrlSuccess,
@@ -11,6 +11,7 @@ import {
   clearRateLimit,
 } from '../state/shortenUrlSlice';
 import { addAnonymousLink, AnonymousLink } from './useAnonymousLinks';
+import { ApiError } from '../../core/lib/apiErrorHandling';
 
 interface CreatedUrlResponse {
   id: string;
@@ -108,16 +109,12 @@ export const useUrlShortener = (setAnonymousLinks: (links: AnonymousLink[]) => v
 
       setLongUrl('');
     } catch (err: any) {
-      let errorMessage = 'Failed to shorten URL. Please ensure it is a valid URL.';
-      if (err.response?.status === 429) {
-        errorMessage = 'Too many requests, please try again later.';
-        dispatch(showSnackbar({ message: errorMessage, severity: 'warning' }));
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
+      // The error object is already standardized by apiClient's interceptor using extractError
+      const apiError = err as ApiError; // Cast to ApiError for type safety
+      const errorMessage = apiError.message || 'Failed to shorten URL. Please ensure it is a valid URL.';
+
       dispatch(createShortUrlFailure(errorMessage));
+      dispatch(showSnackbar({ message: errorMessage, severity: apiError.statusCode === 429 ? 'warning' : 'error' }));
       dispatch(hideCreatedUrl());
       console.error('Error creating short URL:', err);
     } finally {

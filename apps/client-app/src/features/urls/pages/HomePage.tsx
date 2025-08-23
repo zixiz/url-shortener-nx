@@ -47,7 +47,8 @@ export default function HomePage() {
     createdUrl,
     showCreatedUrl,
   } = useAppSelector((state) => state.shortenUrl);
-  const { user: authenticatedUser, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const { user: authenticatedUser } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui);
 
   const { mode } = useThemeMode();
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);

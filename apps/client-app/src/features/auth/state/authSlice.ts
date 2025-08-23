@@ -10,8 +10,7 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
-  isLoading: boolean; 
-  isInitialAuthChecked: boolean; 
+  isLoading: boolean;
   error: string | null;
 }
 
@@ -50,7 +49,6 @@ const getInitialAuthState = (): AuthState => {
     user,
     token,
     isLoading: false,
-    isInitialAuthChecked: false,
     error: null,
   };
 };
@@ -113,12 +111,6 @@ const authSlice = createSlice({
         localStorage.removeItem(AUTH_USER_KEY);
       }
     },
-    initialAuthCheckCompleted: (state) => {
-        state.isInitialAuthChecked = true;
-        if (!state.user || !state.token) {
-            state.isLoading = false; 
-        }
-    },
     clearAuthError: (state) => {
         state.error = null;
     }
@@ -160,5 +152,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, initialAuthCheckCompleted, clearAuthError } = authSlice.actions;
+export const { logout, clearAuthError } = authSlice.actions;
 export default authSlice.reducer;

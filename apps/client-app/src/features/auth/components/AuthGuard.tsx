@@ -15,7 +15,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const pathname = location.pathname;
 
   // Select auth state from Redux store
-  const { user, token, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const { user, token } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui);
   const dispatch = useDispatch();
 
   useEffect(() => {

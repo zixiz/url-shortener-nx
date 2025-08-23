@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { store } from '../store/store';
 import { logout } from '../../auth/state/authSlice';
+import { extractError } from './apiErrorHandling'; // Import the new utility
 
 const MANAGEMENT_SERVICE_BASE_URL = 
   import.meta.env.VITE_MANAGEMENT_API_URL  || 'http://localhost:3001/api';
@@ -39,7 +40,8 @@ apiClient.interceptors.response.use(
       }
       console.error('API Client: Unauthorized request or token expired.', error.response);
     }
-    return Promise.reject(error);
+    // Use the extractError utility to standardize the error object
+    return Promise.reject(extractError(error));
   }
 );
 

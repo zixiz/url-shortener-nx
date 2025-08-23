@@ -1,6 +1,6 @@
 
 import { useAppDispatch } from '../../core/store/hooks';
-import { showSnackbar } from '../../core/store/snackbarSlice';
+import { showSnackbar } from '../../core/store/uiSlice';
 
 export function useCopyToClipboard() {
   const dispatch = useAppDispatch();

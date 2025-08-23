@@ -16,7 +16,8 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const { user, isLoading: isAuthApiLoading, error: authApiError, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const { user, isLoading: isAuthApiLoading, error: authApiError } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui);
 
   
   useEffect(() => {

@@ -46,7 +46,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
-  const { user, isInitialAuthChecked } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth);
+  const { isInitialAuthChecked } = useAppSelector((state) => state.ui);
   const isAuthenticated = !!user; 
 
   const [mobileOpen, setMobileOpen] = useState(false);
