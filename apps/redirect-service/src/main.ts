@@ -6,7 +6,7 @@ import { logger } from './config/logger.js';
 import { connectRedis } from './config/redis.js';
 import { startRabbitMQ  } from './rabbitmq-consumer.js';
 import redirectRoutes from './routes/redirect.routes.js';
-
+import { setupSwagger } from './swagger.js';
 
 async function bootstrap() {
   const app = express();
@@ -26,8 +26,10 @@ async function bootstrap() {
     logger.error('Redirect Service: Error starting RabbitMQ consumer', error);
   }
 
-  app.use('/', redirectRoutes);
+  setupSwagger(app);
 
+  app.use('/', redirectRoutes);
+  
   const port = process.env.PORT || 3003;
   app.listen(port, () => {
     logger.info(`Redirect service listening at http://localhost:${port}`);

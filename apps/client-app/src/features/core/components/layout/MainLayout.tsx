@@ -24,6 +24,7 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../../auth/state/authSlice';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import GitHubIcon from '@mui/icons-material/GitHub';
 import ReduxSnackbar from '../ReduxSnackbar';
 
 const NAV_ITEMS_PUBLIC = [
@@ -85,6 +86,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </ListItemButton>
           </ListItem>
         )}
+        <ListItem disablePadding>
+          <ListItemButton
+            component="a"
+            href="https://github.com/zixiz/url-shortener-nx/"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ textAlign: 'left', pl: 3 }}
+          >
+            <GitHubIcon sx={{ mr: 2 }} />
+            <ListItemText primary="GitHub Repository" />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
@@ -142,7 +155,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </Box>
           )}
           <Box sx={{ ml: isMobile ? 'auto' : 1 }}> {/* Ensure toggle is pushed right */}
-             <ThemeToggleButton />
+            <IconButton
+              color="inherit"
+              aria-label="github repository"
+              href="https://github.com/zixiz/url-shortener-nx/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GitHubIcon />
+            </IconButton>
+            <ThemeToggleButton />
           </Box>
         </Toolbar>
       </AppBar>

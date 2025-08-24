@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes.js';
 import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import { startClickEventConsumer } from './rabbitmq-click-consumer.js'; 
+import { setupSwagger } from './swagger.js';
 
 async function connectToDatabaseWithRetry(retries = 5, delay = 3000) {
   for (let i = 0; i < retries; i++) {
@@ -80,6 +81,8 @@ async function bootstrap() {
   app.use('/api/auth', authRoutes);
   app.use('/api/urls', urlRoutes);
   app.use('/api', statsRoutes);
+
+  setupSwagger(app);
 
   const port = process.env.PORT || 3001;
   app.listen(port, () => {

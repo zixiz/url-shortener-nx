@@ -11,7 +11,8 @@
     "esModuleInterop": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "declaration": false 
+    "declaration": false,
+    "removeComments": false
   },
   "exclude": [
     "jest.config.ts",
