@@ -53,6 +53,17 @@ services:
     env_file:
       - ./.env
       - ./apps/management-service/.env
+    environment:
+      NODE_ENV: production
+      DB_SYNCHRONIZE: false
+      PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT}
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres_main_app:${DB_PORT_INTERNAL}/${DB_NAME}
+      REDIS_URL: redis://${REDIS_HOST_DOCKER}:${REDIS_INTERNAL_PORT} 
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST_DOCKER}:${RABBITMQ_NODE_INTERNAL_PORT}
+      JWT_SECRET: ${JWT_SECRET_GLOBAL}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN_GLOBAL}
+      APP_BASE_URL: ${APP_BASE_URL_HOST_ACCESSIBLE}
+      FRONTEND_URL: ${FRONTEND_URL_DOCKER_ACCESSIBLE}
     depends_on:
       postgres_main: { condition: service_healthy }
       redis: { condition: service_healthy }
