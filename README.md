@@ -14,6 +14,7 @@ URL Shorty is a comprehensive application designed to shorten long URLs into man
 - [Getting Started (Docker Setup)](#getting-started-docker-setup)
 - [Local Development (Without Docker for Services)](#local-development-without-docker-for-services)
 - [API Endpoints](#api-endpoints)
+- [API Docs (Swagger)](#api-docs-swagger)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
 
@@ -154,6 +155,10 @@ This is the easiest way to get the entire application stack running with default
     - **Redirect Service:** `http://localhost:3003` (or `REDIRECT_SERVICE_HOST_PORT`)
     - **RabbitMQ Management UI:** `http://localhost:15672` (user: `guest`, pass: `guest`)
 
+    - **API Docs (Swagger):**
+      - Management Service: `http://localhost:3001/api/api-docs/`
+      - Redirect Service: `http://localhost:3003/redirect-api-docs/#/`
+
 6.  **Stopping Services:**
     ```bash
     docker-compose down
@@ -191,6 +196,17 @@ If you prefer to run application services directly on your host machine (e.g., f
 ## API Endpoints
 
 (Refer to the "API Endpoints Overview" section from the previous README content you liked, ensuring paths match the `management-service` setup, e.g., `/api/auth/login`, `/api/urls`, `/api/stats/:shortId`).
+
+---
+
+## API Docs (Swagger)
+
+Both backend services expose interactive Swagger documentation:
+
+- Management Service Swagger UI: `http://localhost:3001/api/api-docs/`
+- Redirect Service Swagger UI: `http://localhost:3003/redirect-api-docs/#/`
+
+These UIs are available in development and Docker environments. They are generated from the OpenAPI definitions in each service (`apps/management-service/src/swagger.ts` and `apps/redirect-service/src/swagger.ts`).
 
 ---
 

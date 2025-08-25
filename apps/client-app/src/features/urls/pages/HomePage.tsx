@@ -2,13 +2,14 @@ import PageHero from '../components/PageHero';
 import { useAnonymousLinks } from '../hooks/useAnonymousLinks';
 import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import UrlActions from '../components/UrlActions';
+import MobileUrlCard from '../components/MobileUrlCard';
 import LoadingIndicator from '../../core/components/LoadingIndicator';
 import { useState, useEffect, useRef } from 'react';
 import {
   Container, Box, Typography, Paper,
   IconButton, Link as MuiLink,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Collapse, Fade, LinearProgress, Tooltip
+  Collapse, Fade, LinearProgress, Tooltip, useMediaQuery
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -26,6 +27,7 @@ const AUTO_HIDE_DURATION = 10000;
 
 export default function HomePage() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useAppDispatch();
   const copyToClipboard = useCopyToClipboard();
 
@@ -248,57 +250,72 @@ export default function HomePage() {
             <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 4, textAlign: 'left' }}>
               Recently Shortened URLs
             </Typography>
-            <TableContainer component={Paper} elevation={1} sx={{
-              border: 1, 
-              borderColor: 'divider', 
-              borderRadius: '12px',
-            }}>
-              <Table sx={{ minWidth: 650 }} aria-label="recently shortened urls">
-                <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'medium', width: '40%' }}>Original URL</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium', width: '35%' }}>Shortened URL</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'medium', width: '25%', pr: 2 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {anonymousLinks.map((link) => (
-                    <TableRow
-                      key={link.shortId}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
-                    >
-                      <TableCell 
-                        component="th" 
-                        scope="row"
-                        sx={{ 
-                          wordBreak: 'break-all', 
-                          maxWidth: '300px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}
-                        title={link.longUrl}
-                      >
-                        {link.longUrl}
-                      </TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all' }}>
-                        <MuiLink 
-                          href={link.fullShortUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          sx={{ fontWeight: 'medium', color: 'primary.main' }}
-                        >
-                          {link.fullShortUrl}
-                        </MuiLink>
-                      </TableCell>
-                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr:1 }}>
-                          <UrlActions url={link} />
-                        </TableCell>
+            
+            {isMobile ? (
+              // Mobile: Card layout
+              <Box>
+                {anonymousLinks.map((link) => (
+                  <MobileUrlCard 
+                    key={link.shortId} 
+                    url={link} 
+                    showStats={false}
+                  />
+                ))}
+              </Box>
+            ) : (
+              // Desktop: Table layout
+              <TableContainer component={Paper} elevation={1} sx={{
+                border: 1, 
+                borderColor: 'divider', 
+                borderRadius: '12px',
+              }}>
+                <Table sx={{ minWidth: 650 }} aria-label="recently shortened urls">
+                  <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'medium', width: '40%' }}>Original URL</TableCell>
+                      <TableCell sx={{ fontWeight: 'medium', width: '35%' }}>Shortened URL</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'medium', width: '25%', pr: 2 }}>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {anonymousLinks.map((link) => (
+                      <TableRow
+                        key={link.shortId}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
+                      >
+                        <TableCell 
+                          component="th" 
+                          scope="row"
+                          sx={{ 
+                            wordBreak: 'break-all', 
+                            maxWidth: '300px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title={link.longUrl}
+                        >
+                          {link.longUrl}
+                        </TableCell>
+                        <TableCell sx={{ wordBreak: 'break-all' }}>
+                          <MuiLink 
+                            href={link.fullShortUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            sx={{ fontWeight: 'medium', color: 'primary.main' }}
+                          >
+                            {link.fullShortUrl}
+                          </MuiLink>
+                        </TableCell>
+                        <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr:1 }}>
+                            <UrlActions url={link} />
+                          </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Box>
         )}
       </Container>

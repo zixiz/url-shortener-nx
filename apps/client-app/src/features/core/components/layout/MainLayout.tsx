@@ -20,6 +20,8 @@ import {
   useMediaQuery
 } from '@mui/material';
 import ThemeToggleButton from '../../../theme/components/ThemeToggleButton'; 
+import AnimatedBackground from '../../../theme/components/AnimatedBackground';
+import SvgIcon from '@mui/material/SvgIcon';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../../auth/state/authSlice';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -112,8 +114,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar component="nav" position="static">
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+      <AnimatedBackground />
+      <AppBar component="nav" position="static" sx={{ zIndex: 1 }}>
         <Toolbar>
           {isMobile && (
             <IconButton
@@ -137,7 +140,33 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             }} 
           >
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-              URL Shorty
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <SvgIcon 
+                  viewBox="0 0 24 24" 
+                  sx={{ 
+                    fontSize: 24,
+                    color: (theme) => theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main
+                  }}
+                >
+                  <path 
+                    d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                  />
+                  <path 
+                    d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                  />
+                </SvgIcon>
+                URL Shorty
+              </span>
             </RouterLink>
           </Typography>
           
@@ -184,7 +213,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         {drawerContent}
       </Drawer>
       
-      <Container component="main" sx={{ py: 3, flexGrow: 1 }}>
+      <Container component="main" sx={{ py: 3, flexGrow: 1, position: 'relative', zIndex: 1 }}>
         {children}
       </Container>
 
@@ -199,7 +228,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           backgroundColor: (theme) => theme.palette.mode === 'light'
               ? theme.palette.grey[200]
               : theme.palette.grey[800],
-          textAlign: 'center'
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1
         }}
       >
         <Typography variant="body2" color="text.secondary">

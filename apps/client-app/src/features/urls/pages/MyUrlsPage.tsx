@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import UrlActions from '../components/UrlActions';
+import MobileUrlCard from '../components/MobileUrlCard';
 import AuthGuard from '../../auth/components/AuthGuard.js'; 
 import {
   Typography, Container, Box, Alert,
@@ -92,18 +93,16 @@ export default function MyUrlsPage() {
   const renderSkeletonTableRows = () => (
     [...Array(3)].map((_, index) => (
       <TableRow key={`skeleton-row-${index}`}>
-        <TableCell sx={{ width: isMobile ? '60%' : '40%', py: 1.5 }}> {/* Adjust py for consistency */}
+        <TableCell sx={{ width: '40%', py: 1.5 }}>
             <Skeleton variant="text" width="80%" />
-            {isMobile && <Skeleton variant="text" width="70%" sx={{mt: 0.5, fontSize: '0.8rem'}}/>}
-            {isMobile && <Skeleton variant="text" width="50%" sx={{mt: 0.5, fontSize: '0.7rem'}}/>}
         </TableCell>
-        {!isMobile && ( // Only render these skeleton cells if not mobile
-            <>
-                <TableCell sx={{ width: '35%', py: 1.5 }}><Skeleton variant="text" width="70%" /></TableCell>
-                <TableCell sx={{ width: '15%', py: 1.5 }}><Skeleton variant="text" width="50%" /></TableCell>
-            </>
-        )}
-        <TableCell align="right" sx={{ width: isMobile ? '40%' : '10%', py: 1.5, pr: {xs: 1, sm: 2} }}>
+        <TableCell sx={{ width: '35%', py: 1.5 }}>
+            <Skeleton variant="text" width="70%" />
+        </TableCell>
+        <TableCell sx={{ width: '10%', py: 1.5 }}>
+            <Skeleton variant="text" width="50%" />
+        </TableCell>
+        <TableCell align="right" sx={{ width: '15%', py: 1.5, pr: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Skeleton variant="circular" width={24} height={24} sx={{ mr: 0.5 }} />
             <Skeleton variant="circular" width={24} height={24} />
@@ -129,71 +128,84 @@ export default function MyUrlsPage() {
             <Alert severity="error" sx={{ my: 2 }}>{errorFetchingUrls}</Alert>
           )}
 
-          <TableContainer component={Paper} elevation={2} sx={{ 
-            mt: 2, 
-            border: 1, 
-            borderColor: 'divider', 
-            borderRadius: '12px',
-            overflowX: 'auto' // Ensure horizontal scroll on very small if table minWidth is too large
-          }}>
-            <Table sx={{ minWidth: isMobile ? 320 : 700 }} aria-label="my shortened urls table" >
-              <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'medium', width: isMobile ? 'calc(100% - 80px)' : '40%', py:1, px:2 }}>Original URL {isMobile && "/ Short URL / Clicks"}</TableCell>
-                  {!isMobile && <TableCell sx={{ fontWeight: 'medium', width: '35%', py:1, px:2 }}>Shortened URL</TableCell>}
-                  {!isMobile && <TableCell sx={{ fontWeight: 'medium', width: '10%', py:1, px:2 }}>Clicks</TableCell>}
-                  <TableCell align="right" sx={{ fontWeight: 'medium', width: isMobile ? '80px' : '15%', py:1, pr: {xs: 1, sm: 2}, pl:1 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {isLoadingUrls ? (
-                  renderSkeletonTableRows()
-                ) : urls.length === 0 && isInitialAuthChecked && user ? (
+          {isMobile ? (
+            // Mobile: Card layout
+            <Box sx={{ mt: 2 }}>
+              {isLoadingUrls ? (
+                // Mobile skeleton loading
+                [...Array(3)].map((_, index) => (
+                  <Box key={`mobile-skeleton-${index}`} sx={{ mb: 2 }}>
+                    <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
+                  </Box>
+                ))
+              ) : urls.length === 0 && isInitialAuthChecked && user ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography>
+                    You haven't created any short URLs yet. Go ahead and <MuiLink component={RouterLink} to="/">create some</MuiLink>!
+                  </Typography>
+                </Box>
+              ) : (
+                urls.map((url) => (
+                  <MobileUrlCard 
+                    key={url.id} 
+                    url={url} 
+                    onDelete={() => handleDeleteClick(url)}
+                    showStats={true}
+                  />
+                ))
+              )}
+            </Box>
+          ) : (
+            // Desktop: Table layout
+            <TableContainer component={Paper} elevation={2} sx={{ 
+              mt: 2, 
+              border: 1, 
+              borderColor: 'divider', 
+              borderRadius: '12px',
+              overflowX: 'auto'
+            }}>
+              <Table sx={{ minWidth: 700 }} aria-label="my shortened urls table" >
+                <TableHead sx={{ bgcolor: theme.palette.action.hover }}>
                   <TableRow>
-                    <TableCell colSpan={isMobile ? 2 : 4} align="center" sx={{ py: 3 }}>
-                      <Typography sx={{ mt: 0, textAlign: 'center' }}>
-                        You haven't created any short URLs yet. Go ahead and <MuiLink component={RouterLink} to="/">create some</MuiLink>!
-                      </Typography>
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', width: '40%', py:1, px:2 }}>Original URL</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', width: '35%', py:1, px:2 }}>Shortened URL</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', width: '10%', py:1, px:2 }}>Clicks</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'medium', width: '15%', py:1, pr: 2, pl:1 }}>Actions</TableCell>
                   </TableRow>
-                ) : (
-                  urls.map((url) => (
-                    <TableRow
-                      key={url.id}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
-                    >
-                      <TableCell 
-                        component="th" 
-                        scope="row"
-                        sx={{ 
-                          py: 1.5, px:2,
-                          wordBreak: 'break-all', 
-                          maxWidth: isMobile ? 'calc(100vw - 120px)' : '350px', // Adjust max width
-                          minWidth: isMobile ? '150px': '200px', // Give it some minWidth
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                        title={url.longUrl}
-                      >
-                        {url.longUrl}
-                        {isMobile && (
-                          <>
-                            <MuiLink 
-                              href={url.fullShortUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              sx={{ display: 'block', fontWeight: 'medium', color: 'primary.main', mt: 0.5, fontSize: '0.8rem', wordBreak: 'break-all' }}
-                            >
-                              {url.fullShortUrl}
-                            </MuiLink>
-                            <MuiLink component={RouterLink} to={`/stats?id=${url.shortId}`} sx={{ display: 'block', mt: 0.5, fontSize: '0.8rem', color: 'text.disabled', '&:hover': { textDecoration: 'underline' } }}>
-                              Clicks: {url.clickCount}
-                            </MuiLink>
-                          </>
-                        )}
+                </TableHead>
+                <TableBody>
+                  {isLoadingUrls ? (
+                    renderSkeletonTableRows()
+                  ) : urls.length === 0 && isInitialAuthChecked && user ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                        <Typography sx={{ mt: 0, textAlign: 'center' }}>
+                          You haven't created any short URLs yet. Go ahead and <MuiLink component={RouterLink} to="/">create some</MuiLink>!
+                        </Typography>
                       </TableCell>
-                      {!isMobile && (
+                    </TableRow>
+                  ) : (
+                    urls.map((url) => (
+                      <TableRow
+                        key={url.id}
+                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { bgcolor: theme.palette.action.hover } }}
+                      >
+                        <TableCell 
+                          component="th" 
+                          scope="row"
+                          sx={{ 
+                            py: 1.5, px:2,
+                            wordBreak: 'break-all', 
+                            maxWidth: '350px',
+                            minWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={url.longUrl}
+                        >
+                          {url.longUrl}
+                        </TableCell>
                         <TableCell sx={{ wordBreak: 'break-all', py: 1.5, px:2 }}>
                           <MuiLink 
                             href={url.fullShortUrl} 
@@ -204,17 +216,21 @@ export default function MyUrlsPage() {
                             {url.fullShortUrl}
                           </MuiLink>
                         </TableCell>
-                      )}
-                      {!isMobile && <TableCell sx={{py: 1.5, px:2}}><MuiLink component={RouterLink} to={`/stats?id=${url.shortId}`} sx={{ fontWeight: 'medium', color: 'primary.main', '&:hover': { textDecoration: 'underline' } }}>{url.clickCount}</MuiLink></TableCell>}
-                      <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr: {xs:1, sm:1}, py: 1.5, pl:1 }}>
-                        <UrlActions url={url} onDelete={() => handleDeleteClick(url)} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        <TableCell sx={{py: 1.5, px:2}}>
+                          <MuiLink component={RouterLink} to={`/stats?id=${url.shortId}`} sx={{ fontWeight: 'medium', color: 'primary.main', '&:hover': { textDecoration: 'underline' } }}>
+                            {url.clickCount}
+                          </MuiLink>
+                        </TableCell>
+                        <TableCell align="right" sx={{ whiteSpace: 'nowrap', pr: 1, py: 1.5, pl:1 }}>
+                          <UrlActions url={url} onDelete={() => handleDeleteClick(url)} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Box>
       </Container>
       <Dialog
