@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import { UrlController } from '../controllers/url.controller.js';
 import { authenticateJWT } from '../middleware/auth.middleware.js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 const urlController = new UrlController(); 
+
+const statsLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 25, // limit each IP to 20 requests per windowMs
+  message: { error: 'Too many requests for stats, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * @preserve
@@ -69,6 +78,6 @@ const urlController = new UrlController();
  *       '404':
  *         description: URL not found.
  */
-router.get('/stats/:shortId', authenticateJWT, urlController.getUrlStats);
+router.get('/stats/:shortId', statsLimiter, authenticateJWT, urlController.getUrlStats);
 
 export default router;

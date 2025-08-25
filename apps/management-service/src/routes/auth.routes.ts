@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller.js'; 
 import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth.middleware.js'; 
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 const authController = new AuthController();
+
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: { error: 'Too many login attempts from this IP, please try again after 5 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * @preserve
@@ -73,7 +82,7 @@ const authController = new AuthController();
  *       '400':
  *         description: Bad request (e.g., validation error)
  */
-router.post('/register', authController.register);
+router.post('/register', authLimiter, authController.register);
 
 /**
  * @preserve
@@ -112,7 +121,7 @@ router.post('/register', authController.register);
  *       '401':
  *         description: Invalid credentials
  */
-router.post('/login', authController.login);
+router.post('/login', authLimiter, authController.login);
 
 /**
  * @preserve
@@ -127,7 +136,7 @@ router.post('/login', authController.login);
  *       '200':
  *         description: The user's profile
  *         content:
- *           application/json:
+- *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/User'
  *       '401':

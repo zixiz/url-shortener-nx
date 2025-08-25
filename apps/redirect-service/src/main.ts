@@ -7,6 +7,7 @@ import { connectRedis } from './config/redis.js';
 import { startRabbitMQ  } from './rabbitmq-consumer.js';
 import redirectRoutes from './routes/redirect.routes.js';
 import { setupSwagger } from './swagger.js';
+import { globalErrorHandler } from './middleware/error.middleware.js';
 
 async function bootstrap() {
   const app = express();
@@ -29,6 +30,9 @@ async function bootstrap() {
   setupSwagger(app);
 
   app.use('/', redirectRoutes);
+
+  // Global error handler must be the last middleware
+  app.use(globalErrorHandler);
   
   const port = process.env.PORT || 3003;
   app.listen(port, () => {

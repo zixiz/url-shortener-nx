@@ -12,6 +12,7 @@ import urlRoutes from './routes/url.routes.js';
 import statsRoutes from './routes/stats.routes.js';
 import { startClickEventConsumer } from './rabbitmq-click-consumer.js'; 
 import { setupSwagger } from './swagger.js';
+import { globalErrorHandler } from './middleware/error.middleware.js';
 
 async function connectToDatabaseWithRetry(retries = 5, delay = 3000) {
   for (let i = 0; i < retries; i++) {
@@ -83,6 +84,9 @@ async function bootstrap() {
   app.use('/api', statsRoutes);
 
   setupSwagger(app);
+
+  // Global error handler must be the last middleware
+  app.use(globalErrorHandler);
 
   const port = process.env.PORT || 3001;
   app.listen(port, () => {

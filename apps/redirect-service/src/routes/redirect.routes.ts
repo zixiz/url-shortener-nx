@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import { RedirectController } from '../controllers/redirect.controller';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
 const redirectController = new RedirectController();
+
+const redirectLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // limit each IP to 50 requests per windowMs
+  message: { error: 'Too many redirect requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * @preserve
@@ -34,6 +43,6 @@ const redirectController = new RedirectController();
  *       '404':
  *         description: The short URL was not found.
  */
-router.get('/:shortId', redirectController.handleRedirect);
+router.get('/:shortId', redirectLimiter, redirectController.handleRedirect);
 
 export default router;
