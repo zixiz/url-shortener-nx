@@ -74,10 +74,12 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.management-api.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.management-api.priority=10" # HIGH priority
+      - "traefik.http.routers.management-api.priority=10"
       - "traefik.http.routers.management-api.entrypoints=websecure"
       - "traefik.http.routers.management-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.management-api.loadbalancer.server.port=3001"
+      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.management-api.middlewares=strip-api-prefix"
 
   redirect-service:
     build:
@@ -89,7 +91,7 @@ services:
       - ./apps/redirect-service/.env
     environment:
       NODE_ENV: production
-      PORT: ${REDIRECT_SERVICE_INTERNAL_PORT:-3003}
+      PORT: ${REDIRECT_SERVICE_INTERNAL_PORT}
       REDIS_URL: redis://${REDIS_HOST_DOCKER}:${REDIS_INTERNAL_PORT}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST_DOCKER}:${RABBITMQ_NODE_INTERNAL_PORT}
       RABBITMQ_QUEUE_NAME: "new_url_queue"
@@ -167,3 +169,5 @@ volumes:
 networks:
   app_network:
     driver: bridge
+
+    
