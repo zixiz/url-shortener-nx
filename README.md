@@ -1,6 +1,6 @@
 # URL Shorty - Full-Stack URL Shortener
 
-URL Shorty is a comprehensive application designed to shorten long URLs into manageable, unique aliases. It features user authentication, URL management, click tracking via RabbitMQ and PostgreSQL, and a responsive React frontend. The entire application is containerized with Docker for easy setup and deployment.
+URL Shorty is a comprehensive application designed to shorten long URLs into manageable, unique aliases. It features user authentication, URL management, click tracking via RabbitMQ and PostgreSQL, and a responsive React frontend. The entire application is containerized with Docker for easy setup, This project is deployed to [https://prm.co.il/](https://prm.co.il/) using Docker, Docker Compose, Traefik as a reverse proxy, and Let's Encrypt for SSL certificates.
 
 ---
 
@@ -22,11 +22,9 @@ URL Shorty is a comprehensive application designed to shorten long URLs into man
 
 ## Live Demo
 
-You can see a live demo of the project here: [http://129.159.157.229:4200/](http://129.159.157.229:4200/)
+You can see a live demo of the project here: [https://prm.co.il/](https://prm.co.il/)
 
 ---
-
-## Architecture Overview
 
 ## Architecture Overview
 
@@ -60,7 +58,8 @@ The application follows a 3-service architecture:
 - Dark/Light mode with `localStorage` persistence.
 - Responsive UI built with MUI and Tailwind CSS.
 - Containerized with Docker for consistent environments.
-- Monorepo managed with Nx.
+- Deploy on OCI live at [https://prm.co.il/](https://prm.co.il/)
+- Swagger documentation at [https://prm.co.il/api/api-docs/](https://prm.co.il/api/api-docs/)
 
 ---
 
@@ -73,8 +72,11 @@ The application follows a 3-service architecture:
 - **Cache:** Redis (for `redirect-service`)
 - **Message Queue:** RabbitMQ
 - **Containerization:** Docker, Docker Compose
+- **Cloud:** Oracle Cloud Infrastructure
 - **Unique ID Generation:** `nanoid`
 - **Logging:** Winston
+- **Traefik:** Reverse Proxy with Traefik
+- **Let's Encrypt:** SSL certificate provider.
 
 ---
 
