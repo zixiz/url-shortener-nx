@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.client-app.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/s/`) && !PathPrefix(`/redirect-api-docs`)"
+      - "traefik.http.routers.client-app.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/`) && !PathPrefix(`/api`) && !PathPrefix(`/s/)"
       - "traefik.http.routers.client-app.priority=1"
       - "traefik.http.routers.client-app.entrypoints=websecure"
       - "traefik.http.routers.client-app.tls.certresolver=letsencrypt"
@@ -103,19 +103,13 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.redirect-service.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/s/`)"
+      - "traefik.http.routers.redirect-service.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/s/)"
       - "traefik.http.routers.redirect-service.priority=10" # HIGH priority
       - "traefik.http.routers.redirect-service.entrypoints=websecure"
       - "traefik.http.routers.redirect-service.tls.certresolver=letsencrypt"
       - "traefik.http.services.redirect-service.loadbalancer.server.port=3003"
       - "traefik.http.middlewares.strip-s-prefix.stripprefix.prefixes=/s"
       - "traefik.http.routers.redirect-service.middlewares=strip-s-prefix"
-      - "traefik.http.routers.redirect-docs.rule=Host(`${DOMAIN_NAME}`,`${WWW_DOMAIN_NAME}`) && PathPrefix(`/redirect-api-docs`)"
-      - "traefik.http.routers.redirect-docs.priority=10"
-      - "traefik.http.routers.redirect-docs.entrypoints=websecure"
-      - "traefik.http.routers.redirect-docs.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.redirect-docs.service=redirect-docs"
-      - "traefik.http.services.redirect-docs.loadbalancer.server.port=3003"
 
   # --- EXTERNAL DEPENDENCIES ---
   postgres_main:
