@@ -28,23 +28,28 @@ You can see a live demo of the project here: [https://prm.co.il/](https://prm.co
 
 ## Architecture Overview
 
-The application follows a 3-service architecture:
+The application follows a 3-service architecture, consisting of three core services that communicate asynchronously via a message broker (RabbitMQ).
 
-1.  **Management Service (`apps/management-service`)**:
-    - Backend API (Node.js, Express, TypeScript).
-    - Handles user authentication (JWT), URL creation/listing, and statistics.
-    - Primary data store: PostgreSQL.
-    - Publishes new URL mappings to RabbitMQ.
-    - Consumes click events from RabbitMQ to update click counts in PostgreSQL.
-2.  **Redirection Service (`apps/redirect-service`)**:
-    - Lightweight backend (Node.js, Express, TypeScript).
-    - Handles `/{shortId}` redirections.
-    - Consumes new URL mappings from RabbitMQ to cache in Redis (`shortId -> longUrl`).
-    - Publishes click events to RabbitMQ.
-3.  **Client App (`apps/client-app`)**:
-    - Frontend application (React with Vite, MUI, Tailwind CSS, Redux Toolkit).
-    - Provides UI for all user interactions.
-    - Communicates with the Management Service API.
+1.  **Management Service (`apps/management-service`)**: The central API for all user-facing and data-management operations.
+
+    - **Responsibilities**: Handles user registration and JWT-based authentication, validates and shortens new URLs, lists user-specific URLs, and provides access to click statistics.
+    - **Data Storage**: Uses a **PostgreSQL** database (via TypeORM) as its primary data store for users and URL metadata.
+    - **Communication**:
+      - When a new URL is created, it publishes a message to a RabbitMQ queue (`url_created_queue`) so the Redirect Service can cache it.
+      - It consumes messages from a separate RabbitMQ queue (`click_events_queue`) to asynchronously update click counts in PostgreSQL, preventing the redirection process from being blocked by database writes.
+
+2.  **Redirection Service (`apps/redirect-service`)**: A highly-optimized, lightweight service dedicated solely to handling URL redirections.
+
+    - **Responsibilities**: Receives incoming requests for short URLs (`/{shortId}`) and performs the lookup and redirection.
+    - **Data Storage**: Uses an in-memory **Redis** cache to store a mapping of `shortId` to `originalUrl` for fast lookups.
+    - **Communication**:
+      - It consumes messages from the `url_created_queue` to keep its Redis cache up-to-date with the latest short URLs.
+      - When a short URL is accessed, it publishes a message to the `click_events_queue` to notify the Management Service that a click occurred.
+
+3.  **Client App (`apps/client-app`)**: A modern, responsive frontend built with React.
+    - **Responsibilities**: Provides the entire user interface for registration, login, URL shortening, and viewing personal URL lists and statistics.
+    - **Architecture**: Built with **React (Vite)**, **Redux Toolkit** for state management, **MUI** for UI components, and **Tailwind CSS** for styling. It communicates exclusively with the **Management Service** via its REST API.
+    - **Business Logic**: Utilizes custom hooks (e.g., `useUrlShortener`, `useCopyToClipboard`) to abstract component logic and interactions with the Redux store, promoting code reuse and separation of concerns.
 
 ## Features
 
@@ -60,6 +65,20 @@ The application follows a 3-service architecture:
 - Containerized with Docker for consistent environments.
 - Deploy on OCI live at [https://prm.co.il/](https://prm.co.il/)
 - Swagger documentation at [https://prm.co.il/api/api-docs/](https://prm.co.il/api/api-docs/)
+- **API Rate Limiting:** To prevent abuse, the following rate limits are in place:
+  - **Authentication:** 10 requests per 5 minutes per IP.
+  - **URL Shortening:** 10 requests per minute per IP.
+  - **URL Statistics:** 25 requests per minute per IP.
+  - **Redirection:** 50 requests per minute per IP.
+- **Secure Backend:**
+  - **Input Validation:** All API endpoints validate incoming data to protect against common vulnerabilities.
+  - **Centralized Error Handling:** A middleware is used for consistent error handling across the application.
+  - **Structured Logging:** The application uses Winston for structured, environment-aware logging.
+  - **Database Migrations:** Database schema changes are managed through TypeORM migrations.
+- **Advanced Frontend:**
+  - **Mobile-First Responsive Design:** The UI is optimized for both mobile and desktop devices.
+  - **Centralized State Management:** Redux Toolkit is used to manage application state for authentication, UI, and URL data.
+  - **Theming with Animated Background:** A customizable theming system with an animated background for a modern look and feel.
 
 ---
 
