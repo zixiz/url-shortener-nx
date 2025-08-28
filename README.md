@@ -70,15 +70,6 @@ The application follows a 3-service architecture, consisting of three core servi
   - **URL Shortening:** 10 requests per minute per IP.
   - **URL Statistics:** 25 requests per minute per IP.
   - **Redirection:** 50 requests per minute per IP.
-- **Secure Backend:**
-  - **Input Validation:** All API endpoints validate incoming data to protect against common vulnerabilities.
-  - **Centralized Error Handling:** A middleware is used for consistent error handling across the application.
-  - **Structured Logging:** The application uses Winston for structured, environment-aware logging.
-  - **Database Migrations:** Database schema changes are managed through TypeORM migrations.
-- **Advanced Frontend:**
-  - **Mobile-First Responsive Design:** The UI is optimized for both mobile and desktop devices.
-  - **Centralized State Management:** Redux Toolkit is used to manage application state for authentication, UI, and URL data.
-  - **Theming with Animated Background:** A customizable theming system with an animated background for a modern look and feel.
 
 ---
 

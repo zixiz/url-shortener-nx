@@ -21,13 +21,13 @@ import {
 } from '@mui/material';
 import ThemeToggleButton from '../../../theme/components/ThemeToggleButton'; 
 import AnimatedBackground from '../../../theme/components/AnimatedBackground';
-import SvgIcon from '@mui/material/SvgIcon';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../../auth/state/authSlice';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import ReduxSnackbar from '../ReduxSnackbar';
+import CustomMenuIcon from '../CustomMenuIcon';
 
 const NAV_ITEMS_PUBLIC = [
   { text: 'Home', href: '/' },
@@ -70,7 +70,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const drawerContent = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center', width: DRAWER_WIDTH }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        URL Shorty Menu
+        <CustomMenuIcon />
+        URL Shorty
       </Typography>
       <Divider />
       <List>
@@ -124,7 +125,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 1 }} // Adjusted margin
+              sx={{ mr: 1 }}
             >
               <MenuIcon />
             </IconButton>
@@ -141,30 +142,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           >
             <RouterLink to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <SvgIcon 
-                  viewBox="0 0 24 24" 
-                  sx={{ 
-                    fontSize: 24,
-                    color: (theme) => theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main
-                  }}
-                >
-                  <path 
-                    d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                  />
-                  <path 
-                    d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                  />
-                </SvgIcon>
+                <CustomMenuIcon />
                 URL Shorty
               </span>
             </RouterLink>
