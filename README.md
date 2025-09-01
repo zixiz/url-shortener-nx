@@ -28,7 +28,7 @@ You can see a live demo of the project here: [https://prm.co.il/](https://prm.co
 
 ## Architecture Overview
 
-The application follows a 3-service architecture, consisting of three core services that communicate asynchronously via a message broker (RabbitMQ).
+The application follows a 2-service architecture, consisting of two core services that communicate asynchronously via a message broker (RabbitMQ).
 
 1.  **Management Service (`apps/management-service`)**: The central API for all user-facing and data-management operations.
 
