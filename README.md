@@ -213,12 +213,11 @@ If you prefer to run application services directly on your host machine (e.g., f
 
 ## API Docs (Swagger)
 
-Both backend services expose interactive Swagger documentation:
+Management Service expose interactive Swagger documentation:
 
-- Management Service Swagger UI: `http://localhost:3001/api/api-docs/`
-- Redirect Service Swagger UI: `http://localhost:3003/redirect-api-docs/#/`
+- Management Service Swagger UI: [https://prm.co.il/api/api-docs/](https://prm.co.il/api/api-docs/)
 
-These UIs are available in development and Docker environments. They are generated from the OpenAPI definitions in each service (`apps/management-service/src/swagger.ts` and `apps/redirect-service/src/swagger.ts`).
+These UI are available in development and Docker environments.
 
 ---
 
@@ -241,4 +240,3 @@ These UIs are available in development and Docker environments. They are generat
 - `npm run build:management`: Builds the management service for production.
 - `npm run build:redirect`: Builds the redirect service for production.
 - `npm run build:client`: Builds the client-app for production.
-- (Add other common Nx scripts like `lint`, `test` as you implement them)
