@@ -29,7 +29,17 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      if (response.data.success === true) {
+        response.data = response.data.data;
+      } else if (response.data.success === false) {
+        const errorMessage = response.data.error?.message || 'Request failed';
+        return Promise.reject(new Error(errorMessage));
+      }
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
@@ -40,7 +50,6 @@ apiClient.interceptors.response.use(
       }
       console.error('API Client: Unauthorized request or token expired.', error.response);
     }
-    // Use the extractError utility to standardize the error object
     return Promise.reject(extractError(error));
   }
 );

@@ -10,16 +10,16 @@ export class AuthController {
     try {
       const { error, value } = registerSchema.validate(req.body);
       if (error) {
-        logger.warn('Registration validation failed', { error: error.details[0].message, body: req.body });
-        res.status(400).json({ message: error.details[0].message }); 
+        logger.warn('Registration validation failed', { error: error.details[0].message });
+        next(error);
         return;
       }
       const user = await this.authService.registerUser(value);
-      res.status(201).json({ message: 'User registered successfully.', user }); 
+      res.status(201).json({ success: true, data: { userId: user.id, email: user.email, username: user.username } }); 
     } catch (err: any) {
-      logger.error('Error during registration (to be caught by asyncHandler)', { error: err });
+      logger.error('Error during registration (to be caught by asyncHandler)', { error: err.message });
       if (err.message === 'Email already exists.') {
-        res.status(409).json({ message: err.message });
+        res.status(409).json({ success: false, error: { code: 'CONFLICT', message: err.message } });
       } else {
         next(err);
       }
@@ -30,18 +30,18 @@ export class AuthController {
     try {
       const { error, value } = loginSchema.validate(req.body);
       if (error) {
-        logger.warn('Login validation failed', { error: error.details[0].message, body: req.body });
-        res.status(400).json({ message: error.details[0].message });
+        logger.warn('Login validation failed', { error: error.details[0].message });
+        next(error);
         return;
       }
       const { token, user } = await this.authService.loginUser(value);
-      res.status(200).json({ message: 'Login successful.', token, userId: user.id, email: user.email, username: user.username });
+      res.status(200).json({ success: true, data: { token, user: { id: user.id, email: user.email, username: user.username } } });
     } catch (err: any) {
-      logger.error('Error during login (to be caught by asyncHandler)', { error: err });
+      logger.error('Error during login (to be caught by asyncHandler)', { error: err.message });
       if (err.message === 'Invalid email or password.') {
-        res.status(401).json({ message: err.message });
+        res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: err.message } });
       } else if (err.message && err.message.includes('JWT_SECRET')) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal Server Error' } });
       } else {
         next(err);
       }

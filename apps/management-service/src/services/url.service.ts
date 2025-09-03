@@ -7,6 +7,7 @@ import { Url } from '../entities/url.entity.js';
 import { nanoid } from 'nanoid';
 import { getRabbitMQChannel } from '../config/rabbitmq.js';
 import { logger } from '../config/logger.js';
+import { ConflictError } from '../errors/ConflictError.js';
 
 const SHORT_ID_LENGTH = 11;
 const RABBITMQ_NEW_URL_QUEUE = process.env.RABBITMQ_NEW_URL_QUEUE || 'new_url_queue';
@@ -21,30 +22,28 @@ export class UrlService {
    * Creates a new short URL, ensuring uniqueness, and publishes to RabbitMQ.
    */
   async createShortUrl(longUrl: string, userId: string | null): Promise<Url> {
-    let shortId: string;
-    let existingUrl: Url | null;
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    do {
-      shortId = nanoid(SHORT_ID_LENGTH);
-      existingUrl = await this.urlRepository.findOneBy({ shortId });
-      attempts++;
-      if (attempts > maxAttempts && existingUrl) {
-        logger.error('Failed to generate unique shortId after several attempts', { longUrl, attempts });
-        throw new Error('Could not generate a unique short ID. Please try again.');
+    let shortId: string | null = null;
+    const MAX_SHORT_ID_ATTEMPTS = 3;
+    for (let i = 0; i < MAX_SHORT_ID_ATTEMPTS; i++) {
+      const candidate = nanoid(SHORT_ID_LENGTH);
+      const exists = await this.urlRepository.exists({ where: { shortId: candidate } });
+      if (!exists) {
+        shortId = candidate;
+        break;
       }
-    } while (existingUrl);
-
-    const newUrl = new Url();
-    newUrl.longUrl = longUrl;
-    newUrl.shortId = shortId;
-    newUrl.userId = userId;
-
+    }
+  
+    if (!shortId) {
+      throw new ConflictError('Code already in use, try again');
+    }
+  
+    const newUrl = this.urlRepository.create({ longUrl, shortId, userId });
     await this.urlRepository.save(newUrl);
-    await this.publishNewUrlToQueue(newUrl.shortId, newUrl.longUrl);
+    await this.publishNewUrlToQueue(shortId, longUrl);
+  
     return newUrl;
   }
+  
 
   /**
    * Publishes the new URL mapping to RabbitMQ.
@@ -106,11 +105,8 @@ export class UrlService {
 
     await this.urlRepository.remove(urlToDelete);
     logger.info('Successfully deleted URL from database.', { shortId, userId });
-
-    // Asynchronously publish the deletion event
     this.publishUrlDeletedToQueue(shortId).catch(err => {
-        // Log the error but don't let it block the response
-        logger.error('Failed to publish URL deletion event after successful deletion.', {error: err});
+        logger.error('Failed to publish URL deletion event after successful deletion.', {error: err.message});
     });
 
     return 'SUCCESS';

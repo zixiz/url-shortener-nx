@@ -12,14 +12,24 @@ export const extractError = (error: unknown): ApiError => {
     const axiosError = error as AxiosError;
 
     if (axiosError.response) {
-      if (axiosError.response.status === 429 && axiosError.response.data && (axiosError.response.data as any).error) {
+      const responseData = axiosError.response.data as any;
+      
+      if (responseData && responseData.error && responseData.error.message) {
         return {
-          message: (axiosError.response.data as any).error,
+          message: responseData.error.message,
+          statusCode: axiosError.response.status,
+          errorCode: responseData.error.code,
+        };
+      }
+      
+      if (axiosError.response.status === 429 && responseData && responseData.error) {
+        return {
+          message: responseData.error,
           statusCode: axiosError.response.status,
         };
-      } else if (axiosError.response.data && (axiosError.response.data as any).message) {
+      } else if (responseData && responseData.message) {
         return {
-          message: (axiosError.response.data as any).message,
+          message: responseData.message,
           statusCode: axiosError.response.status,
         };
       } else if (axiosError.response.statusText) {

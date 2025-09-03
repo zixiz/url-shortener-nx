@@ -16,9 +16,11 @@ interface AuthState {
 
 interface AuthResponseData {
   token: string;
-  userId: string;
-  email: string;
-  username?: string | null;
+  user: {
+    id: string;
+    email: string;
+    username?: string | null;
+  };
 }
 
 interface RegisterResponseData { 
@@ -68,7 +70,7 @@ export const loginUser = createAsyncThunk<
         password: credentials.passwordP,
       });
       localStorage.setItem(AUTH_TOKEN_KEY, response.data.token);
-      const userData: User = { id: response.data.userId, email: response.data.email, username: response.data.username };
+      const userData: User = { id: response.data.user.id, email: response.data.user.email, username: response.data.user.username };
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userData));
       return response.data;
     } catch (err: any) {
@@ -125,9 +127,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.token = action.payload.token;
         state.user = {
-          id: action.payload.userId,
-          email: action.payload.email,
-          username: action.payload.username,
+          id: action.payload.user.id,
+          email: action.payload.user.email,
+          username: action.payload.user.username,
         };
         state.error = null;
       })

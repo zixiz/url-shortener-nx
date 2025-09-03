@@ -1,0 +1,144 @@
+services:
+  # --- External Dependencies ---
+  postgres_main:
+    image: postgres:15-alpine
+    container_name: postgres_main_app
+    environment:
+      POSTGRES_USER: ${DB_USER:-urlshorteneruser} 
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-urlshortenerpass}
+      POSTGRES_DB: ${DB_NAME:-url_shortener_db}
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_main_data_vol:/var/lib/postgresql/data
+    networks: 
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-urlshorteneruser} -d ${DB_NAME:-url_shortener_db} -q"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_app
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data_vol:/data
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq_app
+    ports:
+      - "${RABBITMQ_NODE_HOST_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data_vol:/var/lib/rabbitmq/
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # --- Application Services ---
+  management-service:
+    build:
+      context: . 
+      dockerfile: ./apps/management-service/Dockerfile 
+    container_name: management_service_app
+    env_file:
+      - ./apps/management-service/.env
+    environment:
+      NODE_ENV: production
+      DB_SYNCHRONIZE: false
+      PORT: ${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}
+      DATABASE_URL: postgresql://${DB_USER:-urlshorteneruser}:${DB_PASSWORD:-urlshortenerpass}@postgres_main:${DB_PORT_INTERNAL:-5432}/${DB_NAME:-url_shortener_db}
+      REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379} 
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:${RABBITMQ_NODE_INTERNAL_PORT:-5672}
+      JWT_SECRET: ${JWT_SECRET_GLOBAL:-"aVerySecureDefaultSecretForDevelopment!@#"} 
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN_GLOBAL:-"1h"}
+      APP_BASE_URL: ${APP_BASE_URL_HOST_ACCESSIBLE:-http://localhost:3003}
+      RABBITMQ_NEW_URL_QUEUE: ${RABBITMQ_NEW_URL_QUEUE_NAME:-"new_url_queue"}
+      RABBITMQ_CLICK_EVENTS_QUEUE: ${RABBITMQ_CLICK_EVENTS_QUEUE_NAME:-"url_clicked_events_queue"}
+      FRONTEND_URL: ${FRONTEND_URL_DOCKER_ACCESSIBLE:-http://localhost:4200}
+    ports:
+      - "${MANAGEMENT_SERVICE_HOST_PORT:-3001}:${MANAGEMENT_SERVICE_INTERNAL_PORT:-3001}"
+    depends_on:
+      postgres_main:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  redirect-service:
+    build:
+      context: .
+      dockerfile: ./apps/redirect-service/Dockerfile
+    container_name: redirect_service_app
+    env_file:
+      - ./apps/redirect-service/.env
+    environment:
+      NODE_ENV: ${NODE_ENV_REDIRECT:-development}
+      PORT: ${REDIRECT_SERVICE_INTERNAL_PORT:-3003}
+      REDIS_URL: redis://redis:${REDIS_INTERNAL_PORT:-6379}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:${RABBITMQ_NODE_INTERNAL_PORT:-5672}
+      RABBITMQ_QUEUE_NAME: ${RABBITMQ_NEW_URL_QUEUE_NAME:-"new_url_queue"}
+      RABBITMQ_CLICK_EVENTS_QUEUE: ${RABBITMQ_CLICK_EVENTS_QUEUE_NAME:-"url_clicked_events_queue"}
+    ports:
+      - "${REDIRECT_SERVICE_HOST_PORT:-3003}:${REDIRECT_SERVICE_INTERNAL_PORT:-3003}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  client-app: 
+    build:
+      context: .
+      dockerfile: ./apps/client-app/Dockerfile
+      args:
+        VITE_MANAGEMENT_API_URL_ARG: ${VITE_MANAGEMENT_API_URL_BUILD_ARG:-http://localhost:3001/api}
+        VITE_APP_BASE_URL_ARG: ${VITE_APP_BASE_URL_BUILD_ARG:-http://localhost:3003}
+    container_name: client_app_app
+    ports:
+      - "${CLIENT_APP_HOST_PORT:-4200}:${CLIENT_APP_INTERNAL_PORT:-80}"
+    depends_on:
+      - management-service
+    networks:
+      - app_network
+    restart: unless-stopped
+
+volumes:
+  postgres_main_data_vol:
+  redis_data_vol:
+  rabbitmq_data_vol:
+
+networks:
+  app_network:
+    driver: bridge

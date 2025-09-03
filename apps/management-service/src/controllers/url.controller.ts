@@ -15,7 +15,7 @@ export class UrlController {
       }
       const { error, value } = createUrlSchema.validate({ longUrl });
       if (error) {
-        res.status(400).json({ message: error.details[0].message });
+        next(error);
         return;
       }
       const userId = req.user?.id || null;
@@ -23,12 +23,14 @@ export class UrlController {
       const appBaseUrl = process.env.APP_BASE_URL || `http://localhost:3003`;
       const fullShortUrl = `${appBaseUrl}/${newUrl.shortId}`;
       res.status(201).json({
-        message: 'Short URL created successfully.',
-        id: newUrl.id,
-        shortId: newUrl.shortId,
-        longUrl: newUrl.longUrl,
-        fullShortUrl: fullShortUrl,
-        userId: newUrl.userId,
+        success: true,
+        data: {
+          id: newUrl.id,
+          shortId: newUrl.shortId,
+          longUrl: newUrl.longUrl,
+          fullShortUrl: fullShortUrl,
+          userId: newUrl.userId,
+        }
       });
     } catch (err) {
       logger.error('Error creating short URL', { error: err instanceof Error ? err.message : String(err) });
@@ -39,7 +41,7 @@ export class UrlController {
   listMyUrls = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user || !req.user.id) {
-        res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
         return;
       }
       const userId = req.user.id;
@@ -53,7 +55,7 @@ export class UrlController {
         clickCount: url.clickCount,
         createdAt: url.createdAt,
       }));
-      res.status(200).json(responseUrls);
+      res.status(200).json({ success: true, data: responseUrls });
     } catch (err) {
       logger.error('Error listing user URLs', { userId: req.user?.id, error: err instanceof Error ? err.message : String(err) });
       next(err);
@@ -65,18 +67,21 @@ export class UrlController {
     logger.info(`Stats request for ${shortId} (from DB)`);
     try {
       if (!req.user || !req.user.id) {
-        res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
         return;
       }
       const urlDetails = await urlService.getUrlStats(shortId, req.user.id);
       if (!urlDetails) {
-        res.status(404).json({ message: 'Short URL not found or you do not have access.' });
+        res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Short URL not found or you do not have access.' } });
         return;
       }
       res.status(200).json({
-        shortId: urlDetails.shortId,
-        longUrl: urlDetails.longUrl,
-        clickCount: urlDetails.clickCount,
+        success: true,
+        data: {
+          shortId: urlDetails.shortId,
+          longUrl: urlDetails.longUrl,
+          clickCount: urlDetails.clickCount,
+        }
       });
     } catch (err) {
       logger.error('Error getting URL stats', { shortId, error: err instanceof Error ? err.message : String(err) });
@@ -89,12 +94,12 @@ export class UrlController {
     const userId = req.user?.id;
 
     if (!userId) {
-      res.status(401).json({ message: 'Unauthorized. User must be logged in to delete a URL.' });
+      res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized. User must be logged in to delete a URL.' } });
       return;
     }
 
     if (!shortId) {
-      res.status(400).json({ message: 'Bad Request: shortId parameter is required.' });
+      res.status(400).json({ success: false, error: { code: 'BAD_REQUEST', message: 'Bad Request: shortId parameter is required.' } });
       return;
     }
 
@@ -106,10 +111,10 @@ export class UrlController {
           res.status(204).send();
           break;
         case 'NOT_FOUND':
-          res.status(404).json({ message: 'URL not found.' });
+          res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'URL not found.' } });
           break;
         case 'FORBIDDEN':
-          res.status(403).json({ message: 'You do not have permission to delete this URL.' });
+          res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'You do not have permission to delete this URL.' } });
           break;
         default:
           // This case should ideally not be reached if the service returns the expected values.

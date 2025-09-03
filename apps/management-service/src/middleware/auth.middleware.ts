@@ -24,7 +24,7 @@ export const authenticateJWT = async (
 
       if (!jwtSecret) {
         logger.error('JWT_SECRET is not defined for token verification.');
-        res.status(500).json({ message: 'Internal Server Configuration Error.' });
+        res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal Server Error' } });
         return;
       }
 
@@ -36,7 +36,7 @@ export const authenticateJWT = async (
 
         if (!user) {
           logger.warn('JWT valid, but user not found in DB.', { userId: decoded.id });
-          res.status(401).json({ message: 'Unauthorized: User not found.' });
+          res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'User not found' } });
           return;
         }
 
@@ -52,20 +52,20 @@ export const authenticateJWT = async (
           tokenProvided: token ? 'yes' : 'no',
         });
         if (err instanceof jwt.TokenExpiredError) {
-          res.status(401).json({ message: 'Unauthorized: Token expired.' });
+          res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Token expired' } });
         } else if (err instanceof jwt.JsonWebTokenError) {
-          res.status(401).json({ message: 'Unauthorized: Invalid token.' });
+          res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid token' } });
         } else {
-          res.status(401).json({ message: 'Unauthorized.' });
+          res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
         }
       }
     } else {
       logger.warn('Malformed Authorization header (not Bearer token).', { header: authHeader });
-      res.status(401).json({ message: 'Unauthorized: Malformed token.' });
+      res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Malformed token' } });
     }
   } else {
     logger.debug('No Authorization header found for protected route.');
-    res.status(401).json({ message: 'Unauthorized: No token provided.' });
+    res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'No token provided' } });
   }
 };
 
