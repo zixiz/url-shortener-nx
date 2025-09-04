@@ -19,7 +19,8 @@ export class UrlService {
   private urlRepository = AppDataSource.getRepository(Url);
 
   /**
-   * Creates a new short URL, ensuring uniqueness, and publishes to RabbitMQ.
+   * Creates a new short URL mapping.
+   * Generates a unique shortId, saves to DB, and publishes to RabbitMQ.
    */
   async createShortUrl(longUrl: string, userId: string | null): Promise<Url> {
     let shortId: string | null = null;

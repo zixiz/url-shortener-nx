@@ -8,7 +8,7 @@ export class AuthService {
 
   async registerUser(data: { email: string; password: string; username?: string }): Promise<Omit<User, 'password'>> {
     const { email, password, username } = data;
-    const existingUser = await this.userRepository.findOneBy({ email });
+    const existingUser = await this.userRepository.exists({ where: { email } });
     if (existingUser) {
       logger.warn('Registration attempt with existing email', { email });
       throw new Error('Email already exists.');
