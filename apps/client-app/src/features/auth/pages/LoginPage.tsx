@@ -6,11 +6,14 @@ import { useAppSelector, useAppDispatch } from '../../core/store/hooks.js';
 import { loginUser, clearAuthError } from '../state/authSlice.js'; 
 import LoadingIndicator from '../../core/components/LoadingIndicator';
 import AuthFormContainer from '../components/AuthFormContainer';
-import { Box, TextField, Button, CircularProgress, Alert, Typography, Link as MuiLink } from '@mui/material';
+import { Box, TextField, Button, CircularProgress, Alert, Typography, Link as MuiLink, InputAdornment, IconButton } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null); 
 
   const dispatch = useAppDispatch();
@@ -56,7 +59,31 @@ export default function LoginPage() {
   return (
     <AuthFormContainer title="Sign In" onSubmit={handleSubmit}>
       <TextField margin="normal" required fullWidth id="email" label="Email Address" value={email} onChange={(e) => { setEmail(e.target.value); setPageError(null); }} disabled={isAuthApiLoading} />
-      <TextField margin="normal" required fullWidth name="password" label="Password" type="password" value={password} onChange={(e) => { setPassword(e.target.value); setPageError(null);}} disabled={isAuthApiLoading} />
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        name="password"
+        label="Password"
+        type={showPassword ? 'text' : 'password'}
+        value={password}
+        onChange={(e) => { setPassword(e.target.value); setPageError(null);}}
+        disabled={isAuthApiLoading}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((prev) => !prev)}
+                edge="end"
+                size="small"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
       
       {pageError && (
         <Alert severity="error" sx={{ width: '100%', mt: 2, mb: 1 }}>{pageError}</Alert>

@@ -7,13 +7,16 @@ import { registerUser, clearAuthError } from '../state/authSlice.js';
 import { showSnackbar } from '../../core/store/uiSlice';
 import LoadingIndicator from '../../core/components/LoadingIndicator';
 import AuthFormContainer from '../components/AuthFormContainer';
-import { Box, TextField, Button, CircularProgress, Alert, Typography, Link as MuiLink } from '@mui/material';
+import { Box, TextField, Button, CircularProgress, Alert, Typography, Link as MuiLink, InputAdornment, IconButton } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
   const [clientFormError, setClientFormError] = useState<string | null>(null);
   const [apiPageError, setApiPageError] = useState<string | null>(null);
 
@@ -71,8 +74,43 @@ export default function RegisterPage() {
       {/* TextFields for email, username, password, confirmPassword */}
       <TextField margin="normal" required fullWidth id="email" label="Email Address" value={email} onChange={(e) => { setEmail(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
       <TextField margin="normal" fullWidth id="username" value={username} label="Username" onChange={(e) => { setUsername(e.target.value); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
-      <TextField margin="normal" required fullWidth type="password" name="password" label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setClientFormError(null); setApiPageError(null); }} disabled={isAuthApiLoading} /* ... */ />
-      <TextField margin="normal" required fullWidth type="password" name="confirmPassword" label="Confirm Password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setClientFormError(null); setApiPageError(null); }} disabled={isAuthApiLoading} error={!!clientFormError && clientFormError.includes("Passwords do not match")} /* ... */ />
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        type={showPasswords ? 'text' : 'password'}
+        name="password"
+        label="Password"
+        value={password}
+        onChange={(e) => { setPassword(e.target.value); setClientFormError(null); setApiPageError(null); }}
+        disabled={isAuthApiLoading}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={showPasswords ? 'Hide passwords' : 'Show passwords'}
+                onClick={() => setShowPasswords((prev) => !prev)}
+                edge="end"
+                size="small"
+              >
+                {showPasswords ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        type={showPasswords ? 'text' : 'password'}
+        name="confirmPassword"
+        label="Confirm Password"
+        value={confirmPassword}
+        onChange={(e) => { setConfirmPassword(e.target.value); setClientFormError(null); setApiPageError(null); }}
+        disabled={isAuthApiLoading}
+        error={!!clientFormError && clientFormError.includes("Passwords do not match")}
+      />
 
       {clientFormError && (
         <Alert severity="warning" sx={{ width: '100%', mt: 2, mb: 1 }}>{clientFormError}</Alert>
