@@ -103,7 +103,9 @@ export default function AnimatedBackground() {
           sx={{
             position: 'absolute',
             width: 4, height: 4, borderRadius: '50%',
-            backgroundColor: isDark ? 'rgba(96,165,250,0.2)' : 'rgba(59,130,246,0.18)',
+            backgroundColor: isDark 
+            ? 'rgba(156,163,175,0.35)' 
+            : 'rgba(168,85,247,0.3)',
             left: `${p.left}%`,
             top: `${p.top}%`,
             animation: `float ${p.duration}s ease-in-out infinite`,
@@ -113,6 +115,7 @@ export default function AnimatedBackground() {
           }}
         />
       ))}
+
 
       <style>
         {`
